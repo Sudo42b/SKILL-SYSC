@@ -1,6 +1,6 @@
 # Clause 13 — Combined TLM-2.0 interfaces and sockets
 
-LRM pp. 482–492.
+LRM pp. 483–493.
 
 TLM-2.0 **interoperability layer**의 핵심. Clause 10~12의 core interface들을 forward/backward 두 묶음으로 결합하고,
 port+export를 한 객체로 묶은 initiator/target socket을 정의한다. **모든 TLM-2.0 모델의 연결 지점.**

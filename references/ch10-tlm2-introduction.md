@@ -1,6 +1,6 @@
 # Clause 10 — Introduction to TLM-2.0
 
-LRM pp. 442–451.
+LRM pp. 443–452.
 
 TLM-2.0의 **개념 지도**. coding style(loosely-timed / approximately-timed), initiator·target·socket·transaction bridge,
 DMI·debug interface, namespace, header file·version macro를 정의한다.

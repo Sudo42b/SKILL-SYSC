@@ -1,6 +1,6 @@
 # Clause 15 — TLM-2.0 base protocol and phases
 
-LRM pp. 529–549.
+LRM pp. 530–550.
 
 `tlm_phase` + base protocol. **TLM-2.0 상호운용(interoperability)의 실질적 계약.** 소켓·generic payload·전송 인터페이스를 어떤 순서·타이밍·규칙으로 써야 하는지를 정의한다.
 

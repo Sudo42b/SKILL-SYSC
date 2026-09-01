@@ -1,6 +1,6 @@
 # Annex B (informative) — Introduction to SystemC
 
-LRM pp. 607–610. **informative** — 표준의 규범적 일부가 아니다. 클래스 라이브러리의 구조와 의도를 이해하는 데 도움을 주려는 목적.
+LRM pp. 608–611. **informative** — 표준의 규범적 일부가 아니다. 클래스 라이브러리의 구조와 의도를 이해하는 데 도움을 주려는 목적.
 
 SystemC를 처음 접하거나 전체 그림이 필요할 때 여기부터 읽는다.
 

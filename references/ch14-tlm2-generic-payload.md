@@ -1,6 +1,6 @@
 # Clause 14 — TLM-2.0 generic payload
 
-LRM pp. 493–528.
+LRM pp. 494–529.
 
 TLM-2.0 core interface를 통해 전달되는 **transaction object의 표준 타입**. base protocol(15.2)과 밀접하게 연관된다.
 메모리 맵드 버스 모델의 interoperability를 담당하는 핵심 클래스. **모든 attribute의 default·modifiability 규칙이 여기에 있다.**

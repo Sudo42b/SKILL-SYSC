@@ -1,6 +1,6 @@
 # Clause 17 — TLM-1 message passing interface and analysis ports
 
-LRM pp. 575–589.
+LRM pp. 576–590.
 
 TLM-1 메시지 패싱 인터페이스(put/get/peek/transport, write/analysis), `tlm_fifo` 채널, analysis port, analysis fifo.
 **TLM-1 transport 인터페이스는 TLM-2.0 transport 인터페이스와 별개다.**

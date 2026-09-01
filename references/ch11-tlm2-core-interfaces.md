@@ -1,6 +1,6 @@
 # Clause 11 — TLM-2.0 core interfaces
 
-LRM pp. 452–479.
+LRM pp. 453–480.
 
 TLM-1 core interface에 더해 TLM-2.0이 추가하는 **blocking / non-blocking transport interface, DMI, debug transport interface**.
 initiator·target·interconnect 사이에서 트랜잭션을 실제로 옮기는 계층 — 소켓(Clause 13)과 generic payload(Clause 14)가 이 인터페이스 위에 얹힌다.
@@ -189,7 +189,11 @@ public:
 | `TLM_UPDATED` | Updated | Changed | May be increased |
 | `TLM_COMPLETED` | Updated | Ignored | May be increased |
 
-> 컬럼 헤더는 §11.2.3.7 e)~g)의 서술로부터 복원한 것이다. 데이터 행은 원문 그대로.
+> **원문 표의 헤더 행이 깨져 있다.** LRM(p. 461)의 Table 53은 헤더 행에 `tlm_sync_enum | Unmodified | Unchanged | Unchanged`가
+> 인쇄되어 있다 — 즉 `TLM_ACCEPTED` 데이터 행이 헤더 자리에 중복 조판된 것이다(PDF 텍스트 레이어에서 헤더 행과
+> 데이터 행이 서로 다른 y좌표를 갖는 것으로 확인). 추출 오류가 아니라 표준 원문의 조판 오류다.
+> 위 컬럼 헤더는 §11.2.3.7 e)~g)가 열거하는 순서(the transaction object, the phase, the time argument)로부터
+> 복원했다. **데이터 3행은 원문 그대로다.**
 
 #### 11.2.3.9–11.2.3.12 Message sequence charts (informative)
 

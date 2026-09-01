@@ -1,6 +1,6 @@
 # Annex A — Glossary (용어집)
 
-LRM pp. 590–606.
+LRM pp. 591–607.
 
 **이 Annex는 informative(참고)이며 규범(normative)이 아니다.**
 

@@ -1,6 +1,6 @@
 # Annex D — IEEE Std 1666-2011 → IEEE Std 1666-2023 변경점
 
-LRM pp. 613–618.
+LRM pp. 614–616.
 
 **이 Annex는 informative(참고)이며 규범(normative)이 아니다.**
 
@@ -22,7 +22,6 @@ LRM pp. 613–618.
 | 2 | 애플리케이션은 `const char*`를 파라미터로 쓰는 함수에 **null pointer를 전달하면 안 된다 shall not** | 제약 추가 |
 | 3 | `sc_core::sc_start(float)`는 더 이상 **음수 값으로 호출될 수 없다** | 제약 추가 |
 | 29 | part-select의 **비트 순서를 뒤집을 수 없다**는 제약 | 제약 추가 |
-| 38 | `tlm::tlm_generic_payload::set_extension`과 `set_auto_extension`에 제약 추가 — 같은 generic payload에 **같은 타입의 extension을 여러 개 붙이는 것을 금지** | 제약 추가 |
 
 ## 3. 신규 추가 — 커널 / 시뮬레이션 제어
 

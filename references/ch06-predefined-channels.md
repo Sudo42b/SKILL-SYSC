@@ -8,7 +8,7 @@ LRM Clause 6. signal / buffer / clock / fifo / mutex / semaphore / event queue�
 
 ---
 
-## 6.0 `kind()` 반환 문자열 요약
+## `kind()` 반환 문자열 요약 (Clause 6 전체)
 
 | 클래스 | `kind()` | 절 |
 |---|---|---|

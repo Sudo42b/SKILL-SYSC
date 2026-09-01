@@ -1,6 +1,6 @@
 # Clause 16 — TLM-2.0 utilities
 
-LRM pp. 550–574.
+LRM pp. 551–575.
 
 Convenience socket, quantum keeper, payload event queue, instance-specific extension. **모두 `namespace tlm_utils`**, 헤더는 `tlm_utils/...`.
 

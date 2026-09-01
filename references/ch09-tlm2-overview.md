@@ -1,6 +1,6 @@
 # Clause 9 — Overview of TLM-2.0 and compliance with TLM-2.0 standard
 
-LRM pp. 440–441.
+LRM pp. 441–442.
 
 Clause 10~17이 **SystemC Transaction-Level Modeling Standard, version 2.0 (TLM-2.0)**를 정의한다.
 이 절은 **무엇을 써야 "TLM-2.0 준수"라고 주장할 수 있는가**를 규정한다. 준수 주장을 할 코드라면 여기서부터 시작.

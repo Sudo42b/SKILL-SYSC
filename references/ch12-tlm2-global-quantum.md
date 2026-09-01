@@ -1,6 +1,6 @@
 # Clause 12 — TLM-2.0 global quantum
 
-LRM pp. 480–481.
+LRM pp. 481–482.
 
 temporal decoupling의 시간 단위인 **time quantum**을 전역으로 관리하는 싱글턴 클래스 `tlm_global_quantum`.
 loosely-timed 모델에서 각 initiator가 언제 동기화할지 결정하는 기준값이 여기서 나온다.

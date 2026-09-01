@@ -1,6 +1,6 @@
 # Clause 7 — SystemC data types
 
-LRM pp. 220–410. `sc_dt` 네임스페이스의 하드웨어 워드 길이 데이터 타입 — 정수·비트/로직 벡터·고정소수점. **RTL 수준 값 표현의 전부.**
+LRM pp. 220–411. `sc_dt` 네임스페이스의 하드웨어 워드 길이 데이터 타입 — 정수·비트/로직 벡터·고정소수점. **RTL 수준 값 표현의 전부.**
 
 각 절은 LRM 형식을 따른다: Description → Class definition → Constraints on usage → Constructors → Member functions.
 `†` 표시 클래스 = **애플리케이션이 직접 인스턴스화하면 안 되는 proxy/base 클래스**.

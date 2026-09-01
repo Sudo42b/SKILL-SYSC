@@ -1,6 +1,6 @@
 # Annex C — Deprecated features (폐지 예정 기능)
 
-LRM pp. 611–612.
+LRM pp. 612–613.
 
 **이 Annex는 informative(참고)이며 규범(normative)이 아니다.**
 
