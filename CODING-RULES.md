@@ -1,9 +1,6 @@
 # SystemC 코딩 규칙
 
-`sysc-lt` / `sysc-at` / `sysc-ca` / `sysc-verify`의 모든 예제 코드가 따르는 규칙.
-
-> `examples/lt_demo`는 이 규칙이 정해지기 전에 쓰였다. `SC_NAMED`를 쓰고 `SC_HAS_PROCESS`를 피하지만
-> 모듈을 `struct X : sc_core::sc_module`로 선언하고 생성자에 `explicit`이 없다 (규칙 1). 아직 정렬되지 않았다.
+이 리포의 모든 예제 코드가 따르는 규칙 — `sysc-lt` / `sysc-at` / `sysc-ca` / `sysc-verify`의 예제와 `examples/lt_demo`.
 
 전제: **IEEE 1666-2023 / SystemC 3.0.x 이상.** 2.3.x 타깃 코드는 각 항목의 `[2.3.x]`를 따른다.
 

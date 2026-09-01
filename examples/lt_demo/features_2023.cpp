@@ -51,13 +51,15 @@ struct StageLogger : sc_stage_callback_if
 // Annex D 11 / LRM 5.2.9 — SC_NAMED
 // Annex D 22 / LRM 5.21 — sc_hierarchy_scope
 // ---------------------------------------------------------------------------
-struct Escapee : sc_module
+class Escapee : public sc_module
 {
-    Escapee(sc_module_name) {}
+public:
+    explicit Escapee(sc_module_name) {}
 };
 
-struct Probe : sc_module
+class Probe : public sc_module
 {
+public:
     // LRM 5.2.9: SC_NAMED passes the identifier through as the constructor's
     // string name, so the variable name and the instance name cannot drift.
     sc_signal<int>  SC_NAMED(sig);
@@ -68,9 +70,7 @@ struct Probe : sc_module
     sc_in<bool>     SC_NAMED(tied_in);
     sc_event        SC_NAMED(ev);
 
-    Escapee* escaped = nullptr;
-
-    Probe(sc_module_name n) : sc_module(n)
+    explicit Probe(sc_module_name n) : sc_module(n)
     {
         // LRM 5.2.8: no SC_HAS_PROCESS — Annex C ah / Annex D 10.
         SC_THREAD(run);
@@ -79,9 +79,12 @@ struct Probe : sc_module
         // inside a nested module. The scope reverts when it goes out of scope.
         {
             sc_hierarchy_scope scope(sc_hierarchy_scope::get_root());
-            escaped = new Escapee("escaped");
+            escaped_ = new Escapee("escaped");
         }
     }
+
+private:
+    Escapee* escaped_ = nullptr;
 
     void run()
     {
@@ -178,9 +181,9 @@ struct Probe : sc_module
         // -- LRM 5.21: sc_hierarchy_scope ------------------------------------
         std::cout << "\n[5.21 sc_hierarchy_scope]\n";
         CHECK("object built under get_root() is top-level",
-              escaped != nullptr && escaped->get_parent_object() == nullptr);
+              escaped_ != nullptr && escaped_->get_parent_object() == nullptr);
         CHECK("its name has no dot",
-              escaped && std::string(escaped->name()).find('.') == std::string::npos);
+              escaped_ && std::string(escaped_->name()).find('.') == std::string::npos);
 
         // -- LRM 6.31: sc_unbound / sc_tie ------------------------------------
         std::cout << "\n[6.31 sc_unbound / sc_tie]\n";

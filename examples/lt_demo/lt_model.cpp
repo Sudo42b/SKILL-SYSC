@@ -36,17 +36,18 @@ using sc_core::SC_ZERO_TIME;
 // ---------------------------------------------------------------------------
 // Target: a memory
 // ---------------------------------------------------------------------------
-struct Memory : sc_core::sc_module
+class Memory : public sc_core::sc_module
 {
+public:
     // LRM 16.2.2.2. BUSWIDTH is in bits and is independent of a transaction's
     // data length (LRM 14.12 f).
     tlm_utils::simple_target_socket<Memory, 32> SC_NAMED(tsock);
 
-    Memory(sc_core::sc_module_name n, sc_dt::uint64 size, const sc_time& latency)
+    explicit Memory(sc_core::sc_module_name n, sc_dt::uint64 size, const sc_time& latency)
       : sc_module(n)
-      , m_size(size)
-      , m_latency(latency)
-      , m_mem(size, 0)
+      , size_(size)
+      , latency_(latency)
+      , mem_(size, 0)
     {
         // LRM 16.2.2.4 f: registering b_transport alone is enough. An incoming
         // nb_transport_fw is converted to this callback by the socket.
@@ -71,7 +72,7 @@ struct Memory : sc_core::sc_module
         // set an error response, report + OK}. Each guard below picks the
         // error response the standard recommends for that failure.
 
-        if (adr + len > m_size) {
+        if (adr + len > size_) {
             // LRM 14.10 / 14.17.1: address outside the memory the target owns.
             trans.set_response_status(tlm::TLM_ADDRESS_ERROR_RESPONSE);
             return;
@@ -100,12 +101,12 @@ struct Memory : sc_core::sc_module
         case tlm::TLM_WRITE_COMMAND:
             // LRM 14.7 f: on a write neither interconnect nor target may modify
             // the data array — we only read out of it.
-            std::memcpy(&m_mem[adr], ptr, len);
+            std::memcpy(&mem_[adr], ptr, len);
             break;
         case tlm::TLM_READ_COMMAND:
             // LRM 14.7 f: on a read the target is the one component allowed to
             // modify the data array.
-            std::memcpy(ptr, &m_mem[adr], len);
+            std::memcpy(ptr, &mem_[adr], len);
             break;
         case tlm::TLM_IGNORE_COMMAND:
             break;
@@ -118,7 +119,7 @@ struct Memory : sc_core::sc_module
         // decrease it (except after a wait). Loosely-timed style: execute now,
         // hand the cost back to the caller as annotation rather than calling
         // wait — see the first example under LRM 11.2.4.2.
-        delay += m_latency;
+        delay += latency_;
 
         // LRM 14.16: a DMI hint. Only meaningful to set it true here because
         // this target does support get_direct_mem_ptr.
@@ -134,11 +135,11 @@ struct Memory : sc_core::sc_module
     // LRM 11.3.3 / 11.3.5.
     bool get_direct_mem_ptr(tlm::tlm_generic_payload& trans, tlm::tlm_dmi& dmi)
     {
-        if (trans.get_address() >= m_size) {
+        if (trans.get_address() >= size_) {
             // LRM 11.3.5 r: to deny a region, describe it and return false.
             dmi.allow_read_write();
             dmi.set_start_address(0);
-            dmi.set_end_address(m_size ? m_size - 1 : 0);
+            dmi.set_end_address(size_ ? size_ - 1 : 0);
             return false;
         }
 
@@ -147,16 +148,16 @@ struct Memory : sc_core::sc_module
         // LRM 11.3.5 g: the DMI pointer addresses the storage that corresponds
         // to the start address, in the same organization as the generic
         // payload data array (LRM 11.3.5 h).
-        dmi.set_dmi_ptr(&m_mem[0]);
+        dmi.set_dmi_ptr(&mem_[0]);
         // LRM 11.3.5 r: first and last byte of the granted region, in this
         // target's own address space. The router translates on the way back
         // (LRM 11.3.5 u).
         dmi.set_start_address(0);
-        dmi.set_end_address(m_size - 1);
+        dmi.set_end_address(size_ - 1);
         // LRM 11.3.5 ac: latency is the average PER BYTE. The initiator
         // multiplies by the number of bytes it would have transferred.
-        dmi.set_read_latency(m_latency / 4);
-        dmi.set_write_latency(m_latency / 4);
+        dmi.set_read_latency(latency_ / 4);
+        dmi.set_write_latency(latency_ / 4);
         return true;
     }
 
@@ -166,31 +167,32 @@ struct Memory : sc_core::sc_module
     unsigned int transport_dbg(tlm::tlm_generic_payload& trans)
     {
         const sc_dt::uint64 adr = trans.get_address();
-        if (adr >= m_size)
+        if (adr >= size_)
             return 0;
 
         const unsigned int len =
-            std::min<sc_dt::uint64>(trans.get_data_length(), m_size - adr);
+            std::min<sc_dt::uint64>(trans.get_data_length(), size_ - adr);
 
         if (trans.get_command() == tlm::TLM_WRITE_COMMAND)
-            std::memcpy(&m_mem[adr], trans.get_data_ptr(), len);
+            std::memcpy(&mem_[adr], trans.get_data_ptr(), len);
         else if (trans.get_command() == tlm::TLM_READ_COMMAND)
-            std::memcpy(trans.get_data_ptr(), &m_mem[adr], len);
+            std::memcpy(trans.get_data_ptr(), &mem_[adr], len);
 
         return len;
     }
 
 private:
-    const sc_dt::uint64        m_size;
-    const sc_time              m_latency;
-    std::vector<unsigned char> m_mem;
+    const sc_dt::uint64        size_;
+    const sc_time              latency_;
+    std::vector<unsigned char> mem_;
 };
 
 // ---------------------------------------------------------------------------
 // Interconnect: an address-decoding router
 // ---------------------------------------------------------------------------
-struct Router : sc_core::sc_module
+class Router : public sc_core::sc_module
 {
+public:
     static const int N_TARGETS = 2;
 
     tlm_utils::simple_target_socket<Router, 32>           SC_NAMED(tsock);
@@ -198,7 +200,7 @@ struct Router : sc_core::sc_module
     // them apart (LRM 16.2.3.1).
     tlm_utils::simple_initiator_socket_tagged<Router, 32>* isock[N_TARGETS];
 
-    Router(sc_core::sc_module_name n)
+    explicit Router(sc_core::sc_module_name n)
       : sc_module(n)
     {
         for (int i = 0; i < N_TARGETS; ++i) {
@@ -216,8 +218,8 @@ struct Router : sc_core::sc_module
         // LRM 15.2.9 b: routing is deterministic and depends only on the
         // address and command attributes. The map is fixed at construction and
         // shall not change while transactions are in flight.
-        m_base[0] = 0x0000; m_size[0] = 0x1000;
-        m_base[1] = 0x1000; m_size[1] = 0x1000;
+        base_[0] = 0x0000; size_[0] = 0x1000;
+        base_[1] = 0x1000; size_[1] = 0x1000;
     }
 
     ~Router()
@@ -242,14 +244,14 @@ struct Router : sc_core::sc_module
         // not touch it again — and per LRM 14.7 e the value on return is to be
         // treated as undefined for routing purposes, so we restore it here for
         // the initiator's benefit rather than relying on what comes back.
-        trans.set_address(global - m_base[port]);
+        trans.set_address(global - base_[port]);
 
         // LRM 11.2.2.4 h: an interconnect should pass b_transport down the
         // forward path.
         (*isock[port])->b_transport(trans, delay);
 
         trans.set_address(global);
-        delay += m_hop_latency;
+        delay += hop_latency_;
     }
 
     // -- DMI forward path ----------------------------------------------------
@@ -268,24 +270,24 @@ struct Router : sc_core::sc_module
             return false;
         }
 
-        trans.set_address(global - m_base[port]);
+        trans.set_address(global - base_[port]);
         const bool granted = (*isock[port])->get_direct_mem_ptr(trans, dmi);
         trans.set_address(global);
 
         // LRM 11.3.5 u: the interconnect must translate the DMI descriptor's
         // start/end addresses on the RETURN path, inverse to the forward-path
         // translation it applied to the address attribute.
-        dmi.set_start_address(dmi.get_start_address() + m_base[port]);
-        dmi.set_end_address(dmi.get_end_address() + m_base[port]);
+        dmi.set_start_address(dmi.get_start_address() + base_[port]);
+        dmi.set_end_address(dmi.get_end_address() + base_[port]);
 
         // LRM 11.3.5 v: the interconnect may narrow a granted region. Clip to
         // what this port actually owns.
-        clip(dmi, m_base[port], m_base[port] + m_size[port] - 1);
+        clip(dmi, base_[port], base_[port] + size_[port] - 1);
 
         // LRM 11.3.5 ac: both interconnect and target may increase the
         // latency, so it accumulates on the way back to the initiator.
-        dmi.set_read_latency(dmi.get_read_latency() + m_hop_latency / 4);
-        dmi.set_write_latency(dmi.get_write_latency() + m_hop_latency / 4);
+        dmi.set_read_latency(dmi.get_read_latency() + hop_latency_ / 4);
+        dmi.set_write_latency(dmi.get_write_latency() + hop_latency_ / 4);
         return granted;
     }
 
@@ -295,7 +297,7 @@ struct Router : sc_core::sc_module
     // path. LRM 11.3.6 h: calling every initiator is the safe implementation.
     void invalidate_direct_mem_ptr(int id, sc_dt::uint64 start, sc_dt::uint64 end)
     {
-        tsock->invalidate_direct_mem_ptr(start + m_base[id], end + m_base[id]);
+        tsock->invalidate_direct_mem_ptr(start + base_[id], end + base_[id]);
     }
 
     // -- debug transport -----------------------------------------------------
@@ -306,7 +308,7 @@ struct Router : sc_core::sc_module
         if (port < 0)
             return 0;
 
-        trans.set_address(global - m_base[port]);
+        trans.set_address(global - base_[port]);
         const unsigned int n = (*isock[port])->transport_dbg(trans);
         trans.set_address(global);
         return n;
@@ -316,7 +318,7 @@ private:
     int decode(sc_dt::uint64 addr) const
     {
         for (int i = 0; i < N_TARGETS; ++i)
-            if (addr >= m_base[i] && addr < m_base[i] + m_size[i])
+            if (addr >= base_[i] && addr < base_[i] + size_[i])
                 return i;
         return -1;
     }
@@ -327,19 +329,20 @@ private:
         if (dmi.get_end_address()   > hi) dmi.set_end_address(hi);
     }
 
-    sc_dt::uint64 m_base[N_TARGETS];
-    sc_dt::uint64 m_size[N_TARGETS];
-    const sc_time m_hop_latency = sc_time(2, SC_NS);
+    sc_dt::uint64 base_[N_TARGETS];
+    sc_dt::uint64 size_[N_TARGETS];
+    const sc_time hop_latency_ = sc_time(2, SC_NS);
 };
 
 // ---------------------------------------------------------------------------
 // Initiator
 // ---------------------------------------------------------------------------
-struct Initiator : sc_core::sc_module
+class Initiator : public sc_core::sc_module
 {
+public:
     tlm_utils::simple_initiator_socket<Initiator, 32> SC_NAMED(isock);
 
-    Initiator(sc_core::sc_module_name n)
+    explicit Initiator(sc_core::sc_module_name n)
       : sc_module(n)
     {
         // LRM 11.2.2.4 b: b_transport shall not be called from a method
@@ -357,8 +360,8 @@ struct Initiator : sc_core::sc_module
 
         // LRM 16.3.5 a: the constructor of tlm_quantumkeeper does not compute
         // the local quantum, so reset() must be called before use.
-        m_qk.set_global_quantum(sc_time(1, SC_US));
-        m_qk.reset();
+        qk_.set_global_quantum(sc_time(1, SC_US));
+        qk_.reset();
     }
 
     void run()
@@ -414,12 +417,12 @@ struct Initiator : sc_core::sc_module
             unsigned int word = 0xDEAD0000u + i;
             access(tlm::TLM_WRITE_COMMAND, 0x0100 + 4 * i, word);
         }
-        std::cout << "  DMI hits: " << m_dmi_hits
-                  << ", transport calls: " << m_transport_calls << "\n";
+        std::cout << "  DMI hits: " << dmi_hits_
+                  << ", transport calls: " << transport_calls_ << "\n";
 
         // LRM 16.3.5 n/o: nothing forces a final synchronization, so drain the
         // outstanding local time before finishing.
-        m_qk.sync();
+        qk_.sync();
 
         std::cout << "\nfinished at " << sc_core::sc_time_stamp() << "\n";
         sc_core::sc_stop();
@@ -453,15 +456,15 @@ private:
         // LRM 14.8 g requires exactly that for the transport interfaces.
 
         // LRM 16.3.4 i: pass the local time offset as the annotation.
-        sc_time delay = m_qk.get_local_time();
+        sc_time delay = qk_.get_local_time();
 
         isock->b_transport(trans, delay);
-        ++m_transport_calls;
+        ++transport_calls_;
 
         // LRM 16.3.5 p: b_transport may itself yield, so it is the initiator's
         // job to write the returned annotation back into the quantum keeper and
         // then test whether a sync is due.
-        m_qk.set(delay);
+        qk_.set(delay);
 
         // LRM 14.7 i: only now may the initiator assume the response status,
         // the DMI hint and (for a read) the data array hold the target's values.
@@ -477,11 +480,11 @@ private:
         }
 
         // Cost of the initiator's own work for this access.
-        m_qk.inc(sc_time(10, SC_NS));
+        qk_.inc(sc_time(10, SC_NS));
 
         // LRM 16.3.5 n: yield once the local offset reaches the local quantum.
-        if (m_qk.need_sync())
-            m_qk.sync();
+        if (qk_.need_sync())
+            qk_.sync();
     }
 
     // LRM 11.3.2 / 11.3.3.
@@ -498,13 +501,13 @@ private:
         dmi.init();
 
         if (isock->get_direct_mem_ptr(trans, dmi))
-            m_dmi.push_back(dmi);
+            dmi_.push_back(dmi);
     }
 
     bool try_dmi(tlm::tlm_command cmd, sc_dt::uint64 addr, unsigned int& word)
     {
-        for (std::size_t i = 0; i < m_dmi.size(); ++i) {
-            const tlm::tlm_dmi& d = m_dmi[i];
+        for (std::size_t i = 0; i < dmi_.size(); ++i) {
+            const tlm::tlm_dmi& d = dmi_[i];
             if (addr < d.get_start_address() || addr + 3 > d.get_end_address())
                 continue;
             // LRM 11.3.5 p: the initiator is responsible for using only the
@@ -522,11 +525,11 @@ private:
             // responsible for honouring it, or the model loses timing accuracy.
             const sc_time& per_byte = (cmd == tlm::TLM_READ_COMMAND)
                                     ? d.get_read_latency() : d.get_write_latency();
-            m_qk.inc(per_byte * 4);
-            ++m_dmi_hits;
+            qk_.inc(per_byte * 4);
+            ++dmi_hits_;
 
-            if (m_qk.need_sync())
-                m_qk.sync();
+            if (qk_.need_sync())
+                qk_.sync();
             return true;
         }
         return false;
@@ -537,13 +540,13 @@ private:
     void invalidate_direct_mem_ptr(sc_dt::uint64 start, sc_dt::uint64 end)
     {
         std::vector<tlm::tlm_dmi> kept;
-        for (std::size_t i = 0; i < m_dmi.size(); ++i) {
-            const bool overlaps = !(m_dmi[i].get_end_address() < start ||
-                                    m_dmi[i].get_start_address() > end);
+        for (std::size_t i = 0; i < dmi_.size(); ++i) {
+            const bool overlaps = !(dmi_[i].get_end_address() < start ||
+                                    dmi_[i].get_start_address() > end);
             if (!overlaps)
-                kept.push_back(m_dmi[i]);
+                kept.push_back(dmi_[i]);
         }
-        m_dmi.swap(kept);
+        dmi_.swap(kept);
         std::cout << "  DMI invalidated over [0x" << std::hex << start
                   << ", 0x" << end << "]\n" << std::dec;
     }
@@ -559,28 +562,20 @@ private:
         return tlm::TLM_COMPLETED;
     }
 
-    tlm_utils::tlm_quantumkeeper m_qk;
-    std::vector<tlm::tlm_dmi>    m_dmi;
-    unsigned long                m_dmi_hits = 0;
-    unsigned long                m_transport_calls = 0;
+    tlm_utils::tlm_quantumkeeper qk_;
+    std::vector<tlm::tlm_dmi>    dmi_;
+    unsigned long                dmi_hits_ = 0;
+    unsigned long                transport_calls_ = 0;
 };
 
 // ---------------------------------------------------------------------------
 // Top level
 // ---------------------------------------------------------------------------
-struct Top : sc_core::sc_module
+class Top : public sc_core::sc_module
 {
-    Initiator cpu;
-    Router    bus;
-    Memory    mem0;
-    Memory    mem1;
-
-    Top(sc_core::sc_module_name n)
+public:
+    explicit Top(sc_core::sc_module_name n)
       : sc_module(n)
-      , cpu("cpu")
-      , bus("bus")
-      , mem0("mem0", 0x1000, sc_time(20, SC_NS))
-      , mem1("mem1", 0x1000, sc_time(50, SC_NS))
     {
         // LRM 13.2.5: binding an initiator socket to a target socket binds the
         // forward and backward paths together.
@@ -588,6 +583,14 @@ struct Top : sc_core::sc_module
         bus.isock[0]->bind(mem0.tsock);
         bus.isock[1]->bind(mem1.tsock);
     }
+
+private:
+    // SC_NAMED gives each submodule a hierarchical name matching its variable
+    // name, and passes any further constructor arguments through (Annex D 11).
+    Initiator SC_NAMED(cpu);
+    Router    SC_NAMED(bus);
+    Memory    SC_NAMED(mem0, 0x1000, sc_time(20, SC_NS));
+    Memory    SC_NAMED(mem1, 0x1000, sc_time(50, SC_NS));
 };
 
 int sc_main(int, char*[])   // LRM 4.4.5.2 fixes this signature
