@@ -35,6 +35,8 @@ Restart Claude Code. Invoke it with `/systemc`, or let it activate on its own fo
 ```
 SKILL-SYSC/
 ├── SKILL.md                                  entry point — routes to the right reference
+├── tools/
+│   └── verify_references.py                  checks references/ against your own copy of the LRM
 └── references/
     ├── ch01-overview.md                      scope, shall/should/may, C++17 baseline
     ├── ch02-normative-references.md          ISO/IEC 14882:2017
@@ -83,6 +85,24 @@ make check    # the 1666-2023 feature probe -> 60 passed, 0 failed
 ```
 
 See `examples/lt_demo/README.md` for how to build SystemC 3.0.2 and for one known deviation of the implementation from the standard.
+
+## Verifying the references
+
+`tools/verify_references.py` checks every file under `references/` against the LRM itself, so an edit that drifts from the standard fails loudly rather than quietly:
+
+1. the `LRM pp. X–Y` header of each file matches the pages that clause actually occupies,
+2. every subclause number used as a heading exists in the LRM body,
+3. every second-level subclause (`N.M`) of a clause is covered by its file, and
+4. every enumerated item of Annex C (`a)`–`ah)`) and Annex D (`1)`–`43)`) is present.
+
+The standard is not redistributable, so the PDF is gitignored and the check is opt-in — point it at your own licensed copy:
+
+```bash
+python3 tools/verify_references.py --pdf /path/to/1666-2023.pdf
+python3 tools/verify_references.py --selftest   # checks the script itself, no PDF needed
+```
+
+It needs `pdftotext` (poppler-utils) and exits non-zero on any mismatch. The extracted text is cached in `.lrm-cache.txt`, which is gitignored for the same reason as the PDF.
 
 ## Citation
 
