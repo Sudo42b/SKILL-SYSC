@@ -115,7 +115,8 @@ from the end_of_elaboration callback.
 
 - **The standard itself**: Copyright © 2023 by the Institute of Electrical and Electronics Engineers, Inc. **All rights reserved.** No part of the standard may be reproduced in any form without the prior written permission of the publisher. Obtain it from [IEEE Xplore](https://standards.ieee.org/ieee/1666/7071/).
 - **This repository**: a **derivative summary and restatement** of the standard's normative content. It is **not endorsed, reviewed, or approved by IEEE or Accellera**, and it does not replace the standard. When exact wording matters, consult the standard.
-- Terms for this repository's own authored material (the `SKILL.md` structure, routing tables, checklists, and prose) are in [`LICENSE`](LICENSE).
+- Terms for this repository's own authored material (the `SKILL.md` structure, routing tables, checklists, and prose) are in [`LICENSE`](LICENSE) — MIT, scoped so that it grants no rights in the standard itself.
+- Full attribution, trademark, disclaimer, and takedown information is in [`NOTICE`](NOTICE).
 - SystemC® is a registered trademark in the U.S. Patent & Trademark Office, owned by the Accellera Systems Initiative. IEEE is a registered trademark owned by the Institute of Electrical and Electronics Engineers, Incorporated.
 
 ### Disclaimer

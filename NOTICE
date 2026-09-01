@@ -1,0 +1,81 @@
+SKILL-SYSC — NOTICE
+===================
+
+This file is a disclosure, not a grant of rights. For the terms under which
+this repository's own authored material may be used, see LICENSE.
+
+
+1. UNDERLYING STANDARD
+----------------------
+
+The technical content of the files under references/ is derived from:
+
+    IEEE Std 1666(TM)-2023 (Revision of IEEE Std 1666-2011),
+    IEEE Standard for Standard SystemC(R) Language Reference Manual.
+    Design Automation Standards Committee, IEEE Computer Society.
+    Approved 5 June 2023 by the IEEE SA Standards Board.
+    Published 8 September 2023.
+    New York, NY, USA: The Institute of Electrical and Electronics
+    Engineers, Inc.
+    Print ISBN 978-1-5044-9867-8 (STD26278)
+    PDF   ISBN 978-1-5044-9868-5 (STDPD26278)
+    https://standards.ieee.org/ieee/1666/7071/
+
+    Copyright (c) 2023 by the Institute of Electrical and Electronics
+    Engineers, Inc. All rights reserved.
+
+The standard states that no part of that publication may be reproduced in any
+form, in an electronic retrieval system or otherwise, without the prior written
+permission of the publisher. Obtain the standard from IEEE. Nothing in this
+repository conveys a license to it.
+
+
+2. RELATIONSHIP OF THIS REPOSITORY TO THE STANDARD
+--------------------------------------------------
+
+The files under references/ are a summary and restatement of the standard's
+normative content, reorganized for use by a coding assistant. They are:
+
+  - NOT the standard, and not a substitute for it;
+  - NOT endorsed, reviewed, certified, or approved by IEEE, the IEEE Standards
+    Association, the IEEE Computer Society, the Design Automation Standards
+    Committee, or the Accellera Systems Initiative;
+  - NOT authoritative. Where this repository and the standard differ, the
+    standard governs. Consult the standard when exact wording matters.
+
+Subclause numbers (for example, "IEEE Std 1666-2023, Sec. 5.2.8") are cited
+throughout so that any statement can be checked against the standard itself.
+
+
+3. TRADEMARKS
+-------------
+
+SystemC(R) is a registered trademark in the U.S. Patent & Trademark Office,
+owned by the Accellera Systems Initiative.
+
+IEEE is a registered trademark in the U.S. Patent & Trademark Office, owned by
+the Institute of Electrical and Electronics Engineers, Incorporated.
+
+These marks are used here for identification only. No affiliation with, or
+sponsorship or endorsement by, their owners is claimed or implied.
+
+
+4. NO WARRANTY
+--------------
+
+IEEE supplies its standards documents "AS IS" and "WITH ALL FAULTS," and
+expressly disclaims all warranties, express or implied, including but not
+limited to merchantability, fitness for a particular purpose, and
+non-infringement. IEEE does not warrant that use of the material contained in
+its standards is free from patent infringement.
+
+This repository is likewise provided with no warranty of any kind. See LICENSE
+for the full disclaimer applicable to this repository's own material.
+
+
+5. TAKEDOWN
+-----------
+
+If you are a rights holder and believe any part of this repository exceeds fair
+use or otherwise infringes your rights, open an issue or contact the repository
+owner; the material in question will be removed or revised.
