@@ -9,7 +9,8 @@ code.
 | `lt_model.cpp` | A TLM-2.0 **loosely-timed** model: initiator + address-decoding router + two memories. Blocking transport, DMI, debug transport, temporal decoupling via `tlm_quantumkeeper`. |
 | `features_2023.cpp` | A probe for constructs Annex D records as **new in IEEE Std 1666-2023**, asserting the behavior the LRM specifies. |
 
-Every non-obvious line cites the subclause that requires it.
+Every non-obvious line cites the subclause that requires it, and both files
+follow [`../../CODING-RULES.md`](../../CODING-RULES.md).
 
 ## Requirements
 
@@ -85,5 +86,5 @@ matters.
 
 Not a conformance issue: the DMI fast path skips the 10 ns of initiator-side
 overhead that the transport path charges, because `try_dmi` returns before
-`access()` reaches `m_qk.inc(...)`. A production model would charge both paths
+`access()` reaches `qk_.inc(...)`. A production model would charge both paths
 consistently.

@@ -122,10 +122,12 @@ g++ -std=c++17 -I$SYSTEMC_HOME/include -L$SYSTEMC_HOME/lib \
 **2. `SC_HAS_PROCESS`를 쓰지 마라.** Annex C ah / Annex D 10 — 2023에서 불필요해졌다. 생성자에서 `SC_METHOD`/`SC_THREAD`를 그냥 호출하면 된다. 3.0.x는 이것만은 `[[deprecated]]`로 경고한다.
 
 ```cpp
-struct M : sc_core::sc_module {
-    M(sc_core::sc_module_name n) : sc_module(n) {
-        SC_THREAD(run);          // SC_HAS_PROCESS 없이
+class M : public sc_core::sc_module {     // CODING-RULES 1: 클래스 직접 작성
+public:
+    explicit M(sc_core::sc_module_name n) : sc_core::sc_module(n) {
+        SC_THREAD(run);                      // SC_HAS_PROCESS 없이
     }
+private:
     void run();
 };
 ```
@@ -190,12 +192,14 @@ struct M : sc_core::sc_module {
 #  define SYSC_HAS_PROCESS(T) SC_HAS_PROCESS(T)
 #endif
 
-struct M : sc_core::sc_module {
-    sc_core::sc_signal<int> sig;              // SC_NAMED는 2023 전용이므로 미사용
-    M(sc_core::sc_module_name n) : sc_module(n), sig("sig") {
+class M : public sc_core::sc_module {
+public:
+    sc_core::sc_signal<int> sig;              // SC_NAMED는 2023 전용이므로 이름을 수기로 준다
+    explicit M(sc_core::sc_module_name n) : sc_core::sc_module(n), sig("sig") {
         SYSC_HAS_PROCESS(M);
         SC_THREAD(run);
     }
+private:
     void run();
 };
 ```

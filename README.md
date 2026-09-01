@@ -43,6 +43,10 @@ SKILL-SYSC/
 ├── tools/
 │   ├── verify_references.py                  checks references/ against your own copy of the LRM
 │   └── verify_citations.py                   checks every § citation in the skills against the LRM
+├── examples/
+│   └── lt_demo/                              a worked LT model, and a probe for the 2023 additions
+├── LICENSE                                   MIT, scoped to this repository's own authorship
+├── NOTICE                                    IEEE attribution, derivative status, takedown
 └── references/
     ├── ch01-overview.md                      scope, shall/should/may, C++17 baseline
     ├── ch02-normative-references.md          ISO/IEC 14882:2017
@@ -67,24 +71,24 @@ SKILL-SYSC/
     └── annexD-changes-2011-2023.md           2011 → 2023 delta (informative)
 ```
 
-Only `SKILL.md` is always in context. Everything under `references/` is read on demand (progressive disclosure).
+Progressive disclosure throughout: only the five skills' descriptions are always loaded. A skill body is read when that skill is selected, and everything under `references/` only when the router sends you there.
 
 ## Sub-skills
 
-`references/` records **what the standard says**. The four sub-skills record **how to assemble it** for one coding style, and deliberately do not restate the rules — each points back into `references/` for the normative wording, so there is one copy of every rule.
+`references/` records **what the standard says**. The four sub-skills record **what to do with it** — three of them how to assemble a model in one coding style, the fourth how to audit one. None restates the rules: each points back into `references/` for the normative wording, so there is one copy of every rule, and `tools/verify_citations.py` checks that those pointers land on the right subclause.
 
 | Skill | Use it for | Backed by |
 |---|---|---|
-| `sysc-lt` | Loosely-timed models: `b_transport`, temporal decoupling, `tlm_quantumkeeper`, DMI | ch10 §10.3.3–4, ch11, ch12, ch16 |
+| `sysc-lt` | Loosely-timed models: `b_transport`, temporal decoupling, `tlm_quantumkeeper`, DMI. Also where untimed lands — §10.3.2 makes no provision for an untimed coding style and reclassifies such models as loosely-timed | ch10 §10.3.2–4, ch11, ch12, ch16 |
 | `sysc-at` | Approximately-timed models: `nb_transport`, the four base-protocol phases, PEQ, the exclusion rule | ch10 §10.3.5, ch11 §11.2.3, ch15, ch16 |
 | `sysc-ca` | Cycle-accurate modeling. §10.3.8 places this **outside TLM-2.0**, so the skill says so and shows what the standard does give you: `sc_clock` + `SC_CTHREAD`, delta-cycle semantics, TLM-1 | ch04, ch05, ch06, ch17, ch10 §10.3.8 |
 | `sysc-verify` | Auditing existing code: `shall` violations, deprecated features, reliance on `undefined` behavior, base-protocol violations | ch04, ch15, annexC, annexD |
 
-Every code example in them compiles clean under `-Wall -Wextra` against SystemC 3.0.2 and was run before being written down.
+Each of the three modeling skills carries a complete, runnable model, and every example in the repository — those, the skeletons, and `examples/lt_demo` — compiles clean under `-Wall -Wextra` against SystemC 3.0.2 and was run before being written down. Where a skill quotes a program's output, that is the output it actually produced.
 
 ## Coding rules
 
-`CODING-RULES.md` holds the rules the examples follow, and the reasons: no `SC_MODULE` / `SC_CTOR`, no `SC_HAS_PROCESS` (deprecated in 1666-2023 and the only thing SystemC 3.0.2 flags), ports public because the parent binds them, `SC_NAMED` so a variable name and its hierarchical name cannot drift apart, and `-Wall -Wextra` clean as a merge condition. Each rule carries its `[2.3.x]` counterpart for IEEE 1666-2011 targets.
+`CODING-RULES.md` holds the rules the examples follow, and the reasons: no `SC_MODULE` / `SC_CTOR`, no `SC_HAS_PROCESS` (deprecated in 1666-2023 and the only thing SystemC 3.0.2 flags), ports public because the parent binds them, `SC_NAMED` so a variable name and its hierarchical name cannot drift apart — which is also why anything declared with it carries no trailing underscore, while plain C++ members do — and `-Wall -Wextra` clean as a merge condition. Each rule carries its `[2.3.x]` counterpart for IEEE 1666-2011 targets.
 
 ## Example prompts
 
@@ -92,6 +96,8 @@ Every code example in them compiles clean under `-Wall -Wextra` against SystemC 
 > What happens if two processes write to the same sc_signal?
 > Review this TLM initiator for base protocol compliance.
 > Write an LT-style initiator module with temporal decoupling.
+> Build an AT target that returns TLM_ACCEPTED and responds on the backward path.
+> Can I model this cycle-accurately with TLM-2.0?
 > Can I use SC_CTHREAD inside the end_of_elaboration callback?
 > Find any deprecated SystemC features in this code.
 ```
