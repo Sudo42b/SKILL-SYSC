@@ -41,11 +41,24 @@ description: IEEE Std 1666-2023 (SystemC LRM) 기반으로 SystemC/TLM-2.0 모�
 | **쓰면 안 되는 deprecated 기능인지 확인** | `references/annexC-deprecated.md` |
 | 2011 → 2023 변경점 (기존 코드 마이그레이션) | `references/annexD-changes-2011-2023.md` |
 
+### 1-1. 하위 스킬 — 코딩 스타일이 정해졌으면 그쪽으로 간다
+
+reference는 **표준이 무엇을 말하는지**를 담고, 아래 스킬은 **그것으로 무엇을 어떤 순서로 조립하는지**를 담는다. 규칙 자체는 복제하지 않는다.
+
+| 하려는 일 | 스킬 |
+|---|---|
+| **LT 모델 작성** — `b_transport`, temporal decoupling, quantum keeper, DMI | `sysc-lt` |
+| **AT 모델 작성** — `nb_transport`, 4-phase 전이, PEQ, exclusion rule | `sysc-at` |
+| **cycle-accurate 모델** — `sc_clock` + `SC_CTHREAD` 신호 수준, TLM-1 (TLM-2.0 범위 밖, §10.3.8) | `sysc-ca` |
+| **기존 코드 준수 감사** — shall 위반·deprecated·undefined 의존 찾기 | `sysc-verify` |
+
+코딩 규칙(신규 코드 공통): `CODING-RULES.md`
+
 > `ch04`는 다른 모든 Clause 의미론의 기반이다. 타이밍·프로세스 실행 순서·언제 호출 가능한가가 얽힌 문제라면 **먼저 ch04를 읽어라.**
 
 ### 2. 코드를 쓴다
 
-reference에 있는 규칙과 예제를 따른다. **reference에 없는 규칙을 지어내지 마라** — 없으면 해당 Clause 파일을 더 읽거나, 원문에 없다고 말한다.
+`CODING-RULES.md`의 코딩 규칙을 따르고, reference에 있는 규칙과 예제를 따른다. **reference에 없는 규칙을 지어내지 마라** — 없으면 해당 Clause 파일을 더 읽거나, 원문에 없다고 말한다.
 
 ### 3. 인용한다
 
@@ -222,47 +235,57 @@ struct M : sc_core::sc_module {
 
 ## 스켈레톤
 
-새 모델을 시작할 때의 최소 골격. 상세 규칙은 `ch05`, `ch06` 참조.
+새 모델을 시작할 때의 최소 골격. **코딩 규칙 전문과 2.3.x 대응은 `CODING-RULES.md`.** 상세 규칙은 `ch05`, `ch06` 참조.
+
+핵심 6가지: `SC_MODULE`/`SC_CTOR` 대신 클래스 직접 작성 · 생성자는 `explicit`, 첫 인자 `sc_module_name` · `SC_HAS_PROCESS` 없이 `SC_THREAD`/`SC_METHOD` 직접 호출 · 포트/소켓은 `public` · `SC_NAMED`로 선언하는 것은 underscore 없음, 순수 C++ 멤버만 `count_` · `-Wall -Wextra` 경고 0건.
 
 ```cpp
-#include "systemc"                 // systemc.h 아닌 systemc 권장 (§5.1.2)
+#include "systemc"                              // systemc.h 아닌 systemc (§5.1.2)
 
-SC_MODULE(Producer) {
-    sc_core::sc_out<int>  SC_NAMED(out);      // §5.2.9 SC_NAMED로 이름 일치 보장
-    sc_core::sc_in<bool>  SC_NAMED(clk);
+class Producer : public sc_core::sc_module {
+public:
+    sc_core::sc_out<int>  SC_NAMED(out);        // 포트는 public — 부모가 바인딩한다
+    sc_core::sc_in<bool>  SC_NAMED(clk);        // SC_NAMED로 변수명 = 계층 이름 (Annex D 11)
 
-    SC_CTOR(Producer) {
-        SC_THREAD(run);
-        sensitive << clk.pos();               // §5.2.14 프로세스 생성 직후에만 유효
+    explicit Producer(sc_core::sc_module_name name)
+        : sc_core::sc_module(name) {
+        SC_THREAD(run);                         // SC_HAS_PROCESS 없이 — 2023에서 deprecated
+        sensitive << clk.pos();                 // §5.2.14 프로세스 생성 직후에만 유효
     }
+
+private:
+    int count_ = 0;                             // 순수 C++ 멤버는 private + underscore (§5.2.10)
 
     void run() {
-        for (;;) {                            // §5.2.11 조기 종료 방지 관용구
-            wait();                           // static sensitivity로 재개
-            out.write(++count);
+        for (;;) {                              // §5.2.11 조기 종료 방지 관용구
+            wait();
+            out.write(++count_);
         }
     }
-    int count = 0;                            // §5.2.10 지속 상태는 데이터 멤버로
 };
 
-SC_MODULE(Top) {
-    sc_core::sc_clock       SC_NAMED(clk);
-    sc_core::sc_signal<int> SC_NAMED(sig);
-    Producer p;
-
-    SC_CTOR(Top) : p("p") {
-        p.clk(clk);                           // §5.12.7 named binding
+class Top : public sc_core::sc_module {
+public:
+    explicit Top(sc_core::sc_module_name name)
+        : sc_core::sc_module(name) {
+        p.clk(clk);                             // §5.12.7 named binding
         p.out(sig);
     }
+
+private:
+    sc_core::sc_clock       SC_NAMED(clk);
+    sc_core::sc_signal<int> SC_NAMED(sig);
+    Producer                SC_NAMED(p);        // SC_NAMED는 가변인자 — 추가 생성자 인자도 받는다
 };
 
-int sc_main(int argc, char* argv[]) {         // §4.4.5.2 전역 네임스페이스, 이 시그니처 shall
-    Top top("top");                           // elaboration = 여기부터 첫 sc_start 직전까지
+int sc_main(int, char*[]) {                     // §4.4.5.2 전역 네임스페이스, 이 시그니처 shall
+    Top top("top");                             // elaboration = 여기부터 첫 sc_start 직전까지
     sc_core::sc_start(100, sc_core::SC_NS);
-    sc_core::sc_stop();                        // §4.4.5.3 end_of_simulation 콜백을 위해 should
+    sc_core::sc_stop();                         // §4.4.5.3 end_of_simulation 콜백을 위해 should
     return 0;
 }
 ```
+
 
 ## 검토 체크리스트
 

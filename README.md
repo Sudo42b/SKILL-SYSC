@@ -28,13 +28,18 @@ git clone https://github.com/Sudo42b/SKILL-SYSC.git ~/.claude/skills/systemc
 git clone https://github.com/Sudo42b/SKILL-SYSC.git .claude/skills/systemc
 ```
 
-Restart Claude Code. Invoke it with `/systemc`, or let it activate on its own for SystemC-related work.
+Restart Claude Code. Invoke it with `/systemc`, or let it activate on its own for SystemC-related work. The clone also installs the four sub-skills below — `/sysc-lt`, `/sysc-at`, `/sysc-ca`, `/sysc-verify`.
 
 ## Layout
 
 ```
 SKILL-SYSC/
 ├── SKILL.md                                  entry point — routes to the right reference
+├── CODING-RULES.md                           coding rules every example here follows
+├── sysc-lt/                                  sub-skill — writing loosely-timed models
+├── sysc-at/                                  sub-skill — writing approximately-timed models
+├── sysc-ca/                                  sub-skill — cycle-accurate modeling (outside TLM-2.0)
+├── sysc-verify/                              sub-skill — auditing existing code for conformance
 ├── tools/
 │   └── verify_references.py                  checks references/ against your own copy of the LRM
 └── references/
@@ -62,6 +67,23 @@ SKILL-SYSC/
 ```
 
 Only `SKILL.md` is always in context. Everything under `references/` is read on demand (progressive disclosure).
+
+## Sub-skills
+
+`references/` records **what the standard says**. The four sub-skills record **how to assemble it** for one coding style, and deliberately do not restate the rules — each points back into `references/` for the normative wording, so there is one copy of every rule.
+
+| Skill | Use it for | Backed by |
+|---|---|---|
+| `sysc-lt` | Loosely-timed models: `b_transport`, temporal decoupling, `tlm_quantumkeeper`, DMI | ch10 §10.3.3–4, ch11, ch12, ch16 |
+| `sysc-at` | Approximately-timed models: `nb_transport`, the four base-protocol phases, PEQ, the exclusion rule | ch10 §10.3.5, ch11 §11.2.3, ch15, ch16 |
+| `sysc-ca` | Cycle-accurate modeling. §10.3.8 places this **outside TLM-2.0**, so the skill says so and shows what the standard does give you: `sc_clock` + `SC_CTHREAD`, delta-cycle semantics, TLM-1 | ch04, ch05, ch06, ch17, ch10 §10.3.8 |
+| `sysc-verify` | Auditing existing code: `shall` violations, deprecated features, reliance on `undefined` behavior, base-protocol violations | ch04, ch15, annexC, annexD |
+
+Every code example in them compiles clean under `-Wall -Wextra` against SystemC 3.0.2 and was run before being written down.
+
+## Coding rules
+
+`CODING-RULES.md` holds the rules the examples follow, and the reasons: no `SC_MODULE` / `SC_CTOR`, no `SC_HAS_PROCESS` (deprecated in 1666-2023 and the only thing SystemC 3.0.2 flags), ports public because the parent binds them, `SC_NAMED` so a variable name and its hierarchical name cannot drift apart, and `-Wall -Wextra` clean as a merge condition. Each rule carries its `[2.3.x]` counterpart for IEEE 1666-2011 targets.
 
 ## Example prompts
 
