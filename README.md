@@ -69,9 +69,55 @@ SKILL-SYSC/
 > 이 SystemC 코드에서 deprecated 기능 쓰는 곳 찾아줘
 ```
 
-## 라이선스와 출처
+## Citation
 
-reference 내용은 IEEE Std 1666-2023, *IEEE Standard for Standard SystemC® Language Reference Manual*, Copyright © 2023 IEEE 의 규범적 내용을 요약·정리한 것이다.
+이 스킬의 reference 내용은 전적으로 아래 표준에서 파생되었다. 이 스킬을 사용한 결과물을 인용할 때는 스킬이 아니라 **표준 원문을 인용하라.**
 
-**표준 원문을 대체하지 않는다.** 정확한 문언이 필요하면 IEEE Xplore에서 원문을 확인하라.
-SystemC®는 Accellera Systems Initiative의 등록 상표다.
+> IEEE Std 1666™-2023 (Revision of IEEE Std 1666-2011), *IEEE Standard for Standard SystemC® Language Reference Manual*. Design Automation Standards Committee, IEEE Computer Society. Approved 5 June 2023 by the IEEE SA Standards Board. Published 8 September 2023. New York, NY, USA: The Institute of Electrical and Electronics Engineers, Inc.
+> Print ISBN 978-1-5044-9867-8 (STD26278) · PDF ISBN 978-1-5044-9868-5 (STDPD26278).
+
+### BibTeX
+
+```bibtex
+@standard{ieee1666-2023,
+  title        = {{IEEE Standard for Standard SystemC\textsuperscript{\textregistered}
+                   Language Reference Manual}},
+  organization = {IEEE Computer Society, Design Automation Standards Committee},
+  publisher    = {Institute of Electrical and Electronics Engineers},
+  address      = {New York, NY, USA},
+  number       = {IEEE Std 1666-2023},
+  note         = {Revision of IEEE Std 1666-2011.
+                  Approved 5 June 2023 by the IEEE SA Standards Board},
+  year         = {2023},
+  month        = sep,
+  isbn         = {978-1-5044-9868-5},
+  url          = {https://standards.ieee.org/ieee/1666/7071/}
+}
+```
+
+### IEEE style
+
+```
+IEEE Standard for Standard SystemC Language Reference Manual,
+IEEE Std 1666-2023 (Revision of IEEE Std 1666-2011), Sep. 2023.
+```
+
+### 절 인용
+
+이 스킬은 규칙의 근거를 LRM 절 번호로 인용한다. 스킬 밖으로 옮길 때는 표준을 함께 밝혀라.
+
+```
+IEEE Std 1666-2023, §5.2.8 — SC_CTHREAD shall not be invoked
+from the end_of_elaboration callback.
+```
+
+## 저작권과 라이선스
+
+- **표준 원문**: Copyright © 2023 by the Institute of Electrical and Electronics Engineers, Inc. **All rights reserved.** 표준 문서 자체는 IEEE의 사전 서면 허락 없이 어떤 형태로도 복제할 수 없다. 표준이 필요하면 [IEEE Xplore](https://standards.ieee.org/ieee/1666/7071/)에서 직접 입수하라.
+- **이 리포지토리**: 표준의 규범적 내용을 **요약·재서술한 2차 저작물**이며 IEEE가 승인하거나 검토하지 않았다. 표준 원문을 대체하지 않는다. 정확한 문언이 필요하면 반드시 원문을 확인하라.
+- 리포지토리 자체 저작물(SKILL.md 구조, 라우팅·체크리스트, 한국어 서술)의 이용 조건은 [`LICENSE`](LICENSE)를 따른다.
+- SystemC®는 Accellera Systems Initiative의 미국 특허상표청 등록 상표다. IEEE는 Institute of Electrical and Electronics Engineers, Inc.의 등록 상표다.
+
+### 면책
+
+표준 문서는 IEEE에 의해 "AS IS", "WITH ALL FAULTS"로 제공되며 IEEE는 상품성·특정 목적 적합성·비침해에 대한 보증을 명시적으로 부인한다. 이 리포지토리 역시 어떠한 보증도 제공하지 않는다.
