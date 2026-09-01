@@ -28,6 +28,16 @@ git clone https://github.com/Sudo42b/SKILL-SYSC.git ~/.claude/skills/systemc
 git clone https://github.com/Sudo42b/SKILL-SYSC.git .claude/skills/systemc
 ```
 
+### From a clone you already have
+
+```bash
+./install.sh              # symlink into ~/.claude/skills/systemc
+./install.sh --project    # symlink into ./.claude/skills/systemc
+./install.sh --uninstall  # remove the link
+```
+
+The symlink means edits in the clone take effect without reinstalling.
+
 Restart Claude Code. Invoke it with `/systemc`, or let it activate on its own for SystemC-related work. The clone also installs the four sub-skills below — `/sysc-lt`, `/sysc-at`, `/sysc-ca`, `/sysc-verify`.
 
 ## Layout
@@ -36,6 +46,7 @@ Restart Claude Code. Invoke it with `/systemc`, or let it activate on its own fo
 SKILL-SYSC/
 ├── SKILL.md                                  entry point — routes to the right reference
 ├── CODING-RULES.md                           coding rules every example here follows
+├── install.sh                                symlinks this clone into the skills directory
 ├── sysc-lt/                                  sub-skill — writing loosely-timed models
 ├── sysc-at/                                  sub-skill — writing approximately-timed models
 ├── sysc-ca/                                  sub-skill — cycle-accurate modeling (outside TLM-2.0)
