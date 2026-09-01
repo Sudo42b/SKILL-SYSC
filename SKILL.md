@@ -69,20 +69,125 @@ LRM §5.2.8 — SC_CTHREAD는 end_of_elaboration 콜백에서 호출하면 안 �
 
 NOTE와 예제는 **informative** — 규범이 아니다. 인용할 때 그 사실을 밝혀라.
 
-## 구현 기준선 — Accellera SystemC 3.0.2
+## 구현 버전별 지시
 
-작성한 코드는 **IEEE 1666-2023 구현에서 컴파일되어야** 한다. 기준 구현은 **Accellera SystemC 3.0.2** (`IEEE_1666_SYSTEMC == 202301L`, C++17). `examples/lt_demo`가 이 조합으로 검증되어 있다.
+**코드를 쓰기 전에 대상 SystemC 버전을 확정하라.** 이 스킬의 reference는 IEEE 1666-2023 기준이지만, 설치된 라이브러리가 2011 구현이면 상당수가 컴파일되지 않는다.
 
-- **SystemC 2.3.x는 IEEE 1666-2011 구현이다.** 2023 신규 기능(`SC_NAMED`, `sc_hierarchy_scope`, `sc_stage_callback_if`, `sc_time(std::string_view)`, `sc_delta_count_at_current_time`, `sc_suspend_all` 계열, `sc_unbound`/`sc_tie`, generic payload option attribute)은 거기서 컴파일되지 않는다. 무엇이 2023 신규인지는 `references/annexD-changes-2011-2023.md`로 확인하라.
-- **코드를 쓰기 전에 `references/annexC-deprecated.md`를 확인하라.** 3.0.2는 deprecated 구성요소에 컴파일 경고를 낸다. 특히 `SC_HAS_PROCESS`는 2023에서 불필요해졌고(Annex C ah / Annex D 10) 경고 대상이다 — **생성자에서 `SC_METHOD`/`SC_THREAD`를 쓸 때 붙이지 마라.**
+### 버전 판별
 
-### 알려진 LRM–구현 불일치
+```bash
+# 설치 확인
+grep -r "IEEE_1666_SYSTEMC\|SC_VERSION_MAJOR" $SYSTEMC_HOME/include/sysc/kernel/sc_ver.h
+```
 
-표준이 확정적(definitive)이다 — LRM Introduction: *"In the event of discrepancies between the behavior of the reference simulator and statements made in this standard, this standard shall be taken to be definitive."* 아래는 그럼에도 코드가 컴파일되게 하려면 알아야 할 항목이다.
+```cpp
+// 소스에서
+#include <systemc>
+#if !defined(IEEE_1666_SYSTEMC) || IEEE_1666_SYSTEMC < 202301L
+#  error "이 코드는 IEEE Std 1666-2023 구현(SystemC 3.0.0 이상)을 요구한다"
+#endif
+```
+
+| 라이브러리 | 표준 | `IEEE_1666_SYSTEMC` |
+|---|---|---|
+| SystemC **3.0.0 이상** | IEEE 1666-**2023** | `202301L` |
+| SystemC 2.3.x | IEEE 1666-**2011** | `201101L` |
+
+---
+
+### SystemC 3.0.0 이상 (IEEE 1666-2023) — 이렇게 하라
+
+**기준 구현. 검증 완료: Accellera SystemC 3.0.2, C++17** (`examples/lt_demo`).
+
+**1. C++17로 컴파일하라.** LRM §1.5가 C++17을 baseline으로 정하고, 3.0.x는 이를 강제한다 — 그보다 낮으면 헤더가 `#error **** SystemC requires a C++ standard version of at least C++17 ****`로 빌드를 끊는다.
+
+```bash
+g++ -std=c++17 -I$SYSTEMC_HOME/include -L$SYSTEMC_HOME/lib \
+    -Wl,-rpath,$SYSTEMC_HOME/lib model.cpp -lsystemc
+```
+
+**2. `SC_HAS_PROCESS`를 쓰지 마라.** Annex C ah / Annex D 10 — 2023에서 불필요해졌다. 생성자에서 `SC_METHOD`/`SC_THREAD`를 그냥 호출하면 된다. 3.0.x는 이것만은 `[[deprecated]]`로 경고한다.
+
+```cpp
+struct M : sc_core::sc_module {
+    M(sc_core::sc_module_name n) : sc_module(n) {
+        SC_THREAD(run);          // SC_HAS_PROCESS 없이
+    }
+    void run();
+};
+```
+
+> 레거시 코드를 당장 못 고치면 `-DSC_ALLOW_DEPRECATED_IEEE_API`로 경고를 막을 수 있다. **새 코드에는 쓰지 마라** — 경고를 없앨 뿐 deprecated 사실은 그대로다.
+
+**3. 2023 신규 기능을 적극 써라.** 아래는 전부 `examples/lt_demo/features_2023.cpp`에서 3.0.2 실측 통과한 것이다.
+
+| 쓸 것 | 대신 쓰던 것 | 근거 |
+|---|---|---|
+| `SC_NAMED(member)` | 생성자 초기화 리스트에 `member("member")` 수기 반복 | §5.2.9 / Annex D 11 |
+| `sc_hierarchy_scope scope(sc_hierarchy_scope::get_root());` | 계층 밖 객체 생성 우회 트릭 | §5.21 / Annex D 22 |
+| `sc_stage_callback_if` + `sc_register_stage_callback` | 접근 불가하던 단계 — 우회 불가였음 | §4.6.10–13 / Annex D 6 |
+| `sc_time("1 ms")`, `from_seconds`, `from_string`, `to_string`, `operator%` | `sc_time(1.0, SC_MS)` 수기 파싱 | §5.11.3 / Annex D 16 |
+| `sc_delta_count_at_current_time()` | 직접 카운터 유지 | §4.6.6 / Annex D 7 |
+| `sc_hierarchical_name_exists` / `sc_register_hierarchical_name` | 이름 충돌 수기 회피 | §5.17.2–3 |
+| `sc_unbound` (출력 개방), `sc_tie::value(v)` (입력 고정) | 더미 signal 인스턴스 | §6.31 / Annex D 27 |
+| `sc_suspend_all` / `sc_unsuspendable` 계열 | 없었음 | §4.6.3 / Annex D 5 |
+| generic payload `set_gp_option` / `TLM_FULL_PAYLOAD` | 없었음 | §14.8 |
+
+> **`sc_unbound` 주의**: `sc_port<sc_signal_inout_if<T>>`가 아닌 포트에 bind하면 **error**다 (§6.31). 입력 포트에는 `sc_tie::value`를 쓴다.
+
+**4. `annexC-deprecated.md`를 직접 확인하라 — 컴파일러는 알려주지 않는다.**
+
+3.0.2에서 `[[deprecated]]`로 표시된 것은 **`SC_HAS_PROCESS` 하나뿐**이다. Annex C의 나머지 항목(`sc_event::notify_delayed`, `sc_module::end_module`, `sc_cycle`, `sc_initialize`, `SC_DEFAULT_STACK_SIZE`, `SC_MAX_NUM_DELTA_CYCLES`, `sc_object::get_parent` 등)은 헤더에 여전히 존재하며 **경고 없이 조용히 컴파일된다**.
+
+> **경고 0건 ≠ deprecated 미사용.** 표준 준수를 확인하려면 Annex C를 직접 대조해야 한다.
+
+**5. LRM–구현 불일치를 인지하라.**
+
+표준이 확정적(definitive)이다 — LRM Introduction: *"In the event of discrepancies between the behavior of the reference simulator and statements made in this standard, this standard shall be taken to be definitive."* 그럼에도 코드가 컴파일되려면 아래를 따라야 한다.
 
 | LRM | 표준의 선언 | SystemC 3.0.2 | 실제로 쓸 것 |
 |---|---|---|---|
 | §5.10.2 / §5.10.8 | `static const sc_event none;` (데이터 멤버) | `static const sc_event& none()` (함수) | `sc_event::none()` |
+
+---
+
+### SystemC 2.3.x (IEEE 1666-2011) — 대체 방법
+
+위 표의 신규 기능은 **하나도 컴파일되지 않는다.** 무엇이 2023 신규인지는 `references/annexD-changes-2011-2023.md`로 확인하고, 아래로 대체하라.
+
+| 2023 기능 | 2.3.x 대체 |
+|---|---|
+| `SC_NAMED(m)` | 생성자 초기화 리스트에 `m("m")` 수기 작성 |
+| `SC_HAS_PROCESS` 생략 | **`SC_HAS_PROCESS(M);` 필수** (2011에서는 요구됨) |
+| `sc_time("1 ms")` | `sc_time(1.0, SC_MS)` |
+| `sc_delta_count_at_current_time()` | 시각 변화를 감지해 직접 카운터 유지 |
+| `sc_hierarchy_scope` | 우회 불가 — 설계를 바꿔라 |
+| `sc_stage_callback_if` | 우회 불가 |
+| `sc_unbound` / `sc_tie::value` | 더미 `sc_signal` 인스턴스를 만들어 bind |
+| `set_gp_option` | 없음. transport에서는 어차피 `TLM_MIN_PAYLOAD` 고정(§14.8 g)이라 손실 없음 |
+
+### 두 버전을 모두 지원해야 한다면
+
+```cpp
+#include <systemc>
+
+#if defined(IEEE_1666_SYSTEMC) && IEEE_1666_SYSTEMC >= 202301L
+#  define SYSC_HAS_PROCESS(T)                 // 2023: 불필요 (Annex C ah)
+#else
+#  define SYSC_HAS_PROCESS(T) SC_HAS_PROCESS(T)
+#endif
+
+struct M : sc_core::sc_module {
+    sc_core::sc_signal<int> sig;              // SC_NAMED는 2023 전용이므로 미사용
+    M(sc_core::sc_module_name n) : sc_module(n), sig("sig") {
+        SYSC_HAS_PROCESS(M);
+        SC_THREAD(run);
+    }
+    void run();
+};
+```
+
+포터빌리티가 목표라면 위 표의 2023 신규 기능을 **아예 쓰지 마라.** 매크로 가드로 감쌀 수 있는 것은 `SC_HAS_PROCESS` 정도이고, `sc_hierarchy_scope`·stage callback처럼 대체 수단이 없는 것은 가드로 해결되지 않는다.
 
 ## 코드 작성 전 항상 확인할 것
 
