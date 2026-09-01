@@ -2,8 +2,10 @@
 """Check every subclause citation in the skills against the IEEE Std 1666-2023 PDF.
 
 `verify_references.py` guards references/. This guards everything that *cites*
-them - SKILL.md, CODING-RULES.md and the sysc-* sub-skills - where a wrong
-citation is invisible: the number exists, it just points at the wrong subclause.
+them - SKILL.md, CODING-RULES.md, the sysc-* sub-skills and everything under
+examples/ - where a wrong citation is invisible: the number exists, it just
+points at the wrong subclause. Both spellings count, `§5.2.12` in the skills and
+`LRM 5.2.12` in the example sources.
 
 Three checks per citation:
 
@@ -37,6 +39,9 @@ from verify_references import extract  # noqa: E402  same cache, same extraction
 
 NORMATIVE = re.compile(r"shall|should|\berror\b|undefined|implementation-defined")
 
+# `§5.2.12` in the Korean skill files, `LRM 5.2.12` in the English example code.
+CITATION = re.compile(r"(?:§|LRM\s+)(\d{1,2}\.[\d.]*\d)")
+
 # An LRM title that names one API entity, e.g. "set_stack_size" or "sc_main".
 IDENTIFIER = re.compile(r"^[a-z_][a-z0-9_]*$")
 # Identifiers appearing anywhere in a title, e.g. both names in
@@ -55,8 +60,13 @@ def lrm_titles(text):
     return out
 
 
-def context(body, pos, before=260, after=60):
-    """The text a citation sits in - its sentence, near enough."""
+def context(body, pos, before=260, after=240):
+    """The text a citation sits in.
+
+    Backwards only to the start of its own line - prose puts the citation after
+    the claim. Forwards further, because example code puts the citation in a
+    comment above the lines it documents.
+    """
     lo = max(body.rfind("\n", 0, pos), pos - before)
     return body[lo:pos + after]
 
@@ -85,6 +95,9 @@ def main():
         assert "11.3" in kids and "11.3.3" not in kids, kids
         body = "x\n    reset_signal_is(rst, true);   // §5.2.16 comment\n"
         assert "reset_signal_is" in context(body, body.index("§")), "sees its own line"
+        assert [m.group(1) for m in CITATION.finditer("§5.2.12 and LRM 11.3.3 o")] == \
+            ["5.2.12", "11.3.3"], "both spellings"
+        assert not CITATION.search("LRM pp. 220-411"), "a page range is not a citation"
         assert not NORMATIVE.search("just a routing pointer")
         assert NORMATIVE.search("this shall not happen")
         print("selftest ok")
@@ -98,6 +111,9 @@ def main():
     files = ["SKILL.md", "CODING-RULES.md"] + sorted(
         os.path.join(d, "SKILL.md") for d in os.listdir(REPO)
         if d.startswith("sysc-") and os.path.isdir(os.path.join(REPO, d)))
+    for root, _, names in os.walk(os.path.join(REPO, "examples")):
+        files += sorted(os.path.relpath(os.path.join(root, n), REPO) for n in names
+                        if n.endswith((".cpp", ".h", ".md")))
 
     has_children = {n.rsplit(".", 1)[0] for n in titles
                     if n.rsplit(".", 1)[0] in titles}
@@ -109,7 +125,7 @@ def main():
     missing, wrong_id, too_shallow, total = [], [], [], 0
     for rel in files:
         body = open(os.path.join(REPO, rel), encoding="utf-8").read()
-        for m in re.finditer(r"§(\d{1,2}\.[\d.]*\d)", body):
+        for m in CITATION.finditer(body):
             num = m.group(1)
             total += 1
             title = titles.get(num)

@@ -133,7 +133,7 @@ python3 tools/verify_references.py --selftest   # checks the script itself, no P
 
 It needs `pdftotext` (poppler-utils) and exits non-zero on any mismatch. The extracted text is cached in `.lrm-cache.txt`, which is gitignored for the same reason as the PDF.
 
-`tools/verify_citations.py` guards the other direction — the files that *cite* the references. `SKILL.md`, `CODING-RULES.md` and the four sub-skills carry 148 subclause citations between them, and a wrong one is invisible: the number exists, it just points somewhere else. So it checks that every cited number is a real LRM subclause, that a citation whose subclause the LRM names after an identifier is not sitting in a sentence about a sibling identifier instead, and that a citation backing a `shall` / `should` / `error` names the subclause carrying the rule rather than its parent.
+`tools/verify_citations.py` guards the other direction — the files that *cite* the references. `SKILL.md`, `CODING-RULES.md`, the four sub-skills and everything under `examples/` carry 259 subclause citations between them, and a wrong one is invisible: the number exists, it just points somewhere else. So it checks that every cited number is a real LRM subclause, that a citation whose subclause the LRM names after an identifier is not sitting in a sentence about a sibling identifier instead, and that a citation backing a `shall` / `should` / `error` names the subclause carrying the rule rather than its parent. Both spellings count — `§5.2.12` in the skills, `LRM 5.2.12` in the example sources.
 
 ```bash
 python3 tools/verify_citations.py --pdf /path/to/1666-2023.pdf
