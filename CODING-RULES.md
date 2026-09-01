@@ -66,7 +66,7 @@ public:
     }
 
 private:
-    int count_ = 0;                             // 순수 C++ 멤버: private + underscore (§5.2.10)
+    int count_ = 0;                             // 순수 C++ 멤버: private + underscore (이 리포의 규칙)
 
     void run() {
         for (;;) {                              // §5.2.11 조기 종료 방지 관용구

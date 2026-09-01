@@ -80,3 +80,6 @@ examples/lt_demo/features_2023
 
 # cached text of the (non-redistributable) LRM, produced by tools/verify_references.py
 .lrm-cache.txt
+
+# byte-compiled helpers from tools/
+tools/__pycache__/

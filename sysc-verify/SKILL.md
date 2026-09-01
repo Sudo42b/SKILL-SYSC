@@ -121,7 +121,7 @@ g++ -std=c++17 -Wall -Wextra -I"$SYSTEMC_HOME/include" -c <file>
 예:
 
 ```
-router.cpp:88  get_direct_mem_ptr 구현에서 wait 호출 — LRM §11.3 (shall not)
+router.cpp:88  get_direct_mem_ptr 구현에서 wait 호출 — LRM §11.3.3 o (shall not)
                  고치는 법: DMI 조회를 즉시 반환하도록 바꾸고, 지연은 transport 경로에서 부과할 것
 mem.cpp:41     TLM_ACCEPTED 반환 전에 trans.set_response_status 호출 — LRM §11.2.3.7 e (shall not)
                  고치는 법: 갱신했다면 TLM_UPDATED를 반환하거나, 갱신을 backward path로 미룰 것
@@ -140,6 +140,10 @@ mem.cpp:41     TLM_ACCEPTED 반환 전에 trans.set_response_status 호출 — L
 `references/`가 LRM과 어긋나지 않았는지 확인하려면 (본인의 정식 라이선스 PDF 필요):
 
 ```bash
-python3 ../tools/verify_references.py --pdf /path/to/1666-2023.pdf
-python3 ../tools/verify_references.py --selftest    # PDF 없이 스크립트 자체 검사
+python3 ../tools/verify_references.py --pdf /path/to/1666-2023.pdf   # references/ 가 LRM과 맞는가
+python3 ../tools/verify_citations.py --pdf /path/to/1666-2023.pdf    # 스킬의 § 인용이 맞는 절을 가리키는가
+python3 ../tools/verify_references.py --selftest                     # PDF 없이 스크립트 자체 검사
+python3 ../tools/verify_citations.py --selftest
 ```
+
+인용 검증기는 세 가지를 본다: 인용 번호가 LRM에 실존하는가, LRM이 식별자로 이름 붙인 절을 인용해 놓고 문장은 형제 절의 식별자를 말하고 있지 않은가, `shall`/`should`/`error`를 뒷받침하는 인용이 규칙을 담은 절 대신 그 부모 절에서 멈추지 않았는가.

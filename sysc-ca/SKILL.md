@@ -49,10 +49,10 @@ LRM §10.3.8, 축자:
 
 clocked thread는 클록 에지마다 한 번 재개된다. 사이클 단위 상태 기계에 맞는 유일한 프로세스 종류다.
 
-**제약 (§5.2.10, ch05):**
+**제약 (§5.2.12, ch05):**
 
-- clocked thread는 **`wait()`와 `wait(int)`만** 호출할 수 있다. 그 외 오버로드는 **error**.
-- `reset_signal_is`는 프로세스 생성 **직후에만** 유효하다 (§5.2.13~16). 사이에 모듈 인스턴스화가 끼면 안 된다.
+- clocked thread는 **`wait()`와 `wait(int)`만** 호출할 수 있다. 그 외 오버로드는 **error** — §5.2.12 축자: *"It shall be an error for a clocked thread process to call any other overloaded form of the function wait."*
+- `reset_signal_is`는 프로세스 생성 **직후에만** 유효하다 (§5.2.13). 사이에 모듈 인스턴스화가 끼면 안 된다.
 - `SC_CTHREAD`는 **deprecated**다 (Annex C `ac)`) — **단, 두 번째 인자가 event finder인 형태는 예외이며 여전히 지원된다.** `clk.pos()`는 event finder이므로 `SC_CTHREAD(f, clk.pos())`는 정상이다.
 
 ### 2. delta cycle 의미론이 사이클 정확도를 만든다
@@ -78,14 +78,14 @@ public:
     explicit Stage(sc_core::sc_module_name name)
         : sc_core::sc_module(name) {
         SC_CTHREAD(tick, clk.pos());     // 두 번째 인자가 event finder — Annex C ac의 예외, deprecated 아님
-        reset_signal_is(rst, true);      // §5.2.16 — 프로세스 생성 직후에만 유효
+        reset_signal_is(rst, true);      // §5.2.13 — 프로세스 생성 직후에만 유효
     }
 
 private:
     void tick() {
         dout.write(0);                   // reset 동작
         for (;;) {
-            wait();                      // clocked thread는 wait()와 wait(int)만 (§5.2.10)
+            wait();                      // clocked thread는 wait()와 wait(int)만 (§5.2.12)
             dout.write(din.read());      // sc_signal이라 다음 delta에 보인다 = 레지스터 한 단
         }
     }
@@ -159,6 +159,6 @@ cycle 7  src=4  mid=3  sink=2
 - **base protocol에 CA phase를 얹음** — §15.2.5 i가 막는다. 새 protocol traits class를 정의하라 (§14.2.3).
 - **`sc_signal` 대신 평범한 멤버 변수로 스테이지 간 값을 전달** — 평가/갱신 분리가 없어져 사이클 정확도가 깨진다. `ch04`.
 - **clocked thread에서 `wait(sc_time)` 호출** — **error**. `wait()`와 `wait(int)`만 된다.
-- **`reset_signal_is`를 프로세스 생성과 떨어뜨려 호출** — §5.2.13~16: 직전에 생성된 프로세스를 겨냥해야 한다.
+- **`reset_signal_is`를 프로세스 생성과 떨어뜨려 호출** — §5.2.13: 직전에 생성된 프로세스를 겨냥해야 한다.
 - **`SC_CTHREAD`가 통째로 deprecated라고 착각** — Annex C `ac)`: 두 번째 인자가 event finder인 형태는 **예외이며 여전히 지원된다.**
 - **`sc_signal` writer policy 위반** — 기본은 `SC_ONE_WRITER`다 (Annex D `24)`). 두 프로세스가 같은 신호를 쓰면 걸린다. `ch06`.

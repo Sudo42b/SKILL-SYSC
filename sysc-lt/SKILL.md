@@ -75,7 +75,167 @@ void b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& delay) {
 
 DMI는 LT의 주 가속 수단이다. temporal decoupling만으로 약 10X, **DMI와 결합하면 100X**까지 가능하다 (§10.3.3).
 
-`get_direct_mem_ptr` 구현은 **직접·간접적으로 `wait`를 호출하면 안 된다 shall not** (§11.3).
+`get_direct_mem_ptr` 구현은 **직접·간접적으로 `wait`를 호출하면 안 된다 shall not** (§11.3.3 o).
+
+### 6. 돌아가는 최소 LT 모델
+
+quantum keeper, `b_transport`, DMI를 한 파일에 담은 것. 전체 라우터·다중 target 예제는 `../examples/lt_demo/`.
+
+```cpp
+#include "systemc"
+#include "tlm"
+#include "tlm_utils/simple_initiator_socket.h"
+#include "tlm_utils/simple_target_socket.h"
+#include "tlm_utils/tlm_quantumkeeper.h"
+
+class Memory : public sc_core::sc_module {
+public:
+    tlm_utils::simple_target_socket<Memory> SC_NAMED(socket);
+
+    explicit Memory(sc_core::sc_module_name name, sc_core::sc_time latency)
+        : sc_core::sc_module(name), latency_(latency), mem_(SIZE, 0) {
+        socket.register_b_transport(this, &Memory::b_transport);
+        socket.register_get_direct_mem_ptr(this, &Memory::get_direct_mem_ptr);
+    }
+
+private:
+    static const unsigned SIZE = 256;
+    const sc_core::sc_time     latency_;
+    std::vector<unsigned char> mem_;
+
+    void b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& delay) {
+        const sc_dt::uint64 addr = trans.get_address();
+        const unsigned      len  = trans.get_data_length();
+        if (addr + len > SIZE) {
+            trans.set_response_status(tlm::TLM_ADDRESS_ERROR_RESPONSE);
+            return;
+        }
+        if (trans.get_command() == tlm::TLM_WRITE_COMMAND)
+            std::memcpy(&mem_[addr], trans.get_data_ptr(), len);
+        else
+            std::memcpy(trans.get_data_ptr(), &mem_[addr], len);
+
+        delay += latency_;                                  // §11.2.4.2 d — 늘리는 것만 허용
+        trans.set_dmi_allowed(true);
+        trans.set_response_status(tlm::TLM_OK_RESPONSE);    // §15.2.11 c/d — 반환 전에 설정할 의무
+    }
+
+    bool get_direct_mem_ptr(tlm::tlm_generic_payload&, tlm::tlm_dmi& dmi) {
+        dmi.allow_read_write();                             // §11.3.3 o — 여기서 wait 금지
+        dmi.set_dmi_ptr(mem_.data());
+        dmi.set_start_address(0);
+        dmi.set_end_address(SIZE - 1);
+        dmi.set_read_latency(latency_);
+        dmi.set_write_latency(latency_);
+        return true;
+    }
+};
+
+class Cpu : public sc_core::sc_module {
+public:
+    tlm_utils::simple_initiator_socket<Cpu> SC_NAMED(socket);
+
+    explicit Cpu(sc_core::sc_module_name name) : sc_core::sc_module(name) {
+        SC_THREAD(run);
+    }
+
+    int transports() const { return transports_; }
+
+private:
+    tlm_utils::tlm_quantumkeeper qk_;
+    tlm::tlm_dmi dmi_;
+    bool         dmi_valid_ = false;
+    int          transports_ = 0;
+
+    void run() {
+        qk_.set_global_quantum(sc_core::sc_time(200, sc_core::SC_NS));
+        qk_.reset();                                        // §16.3.5 a — 생성자가 local quantum을 계산하지 않는다
+
+        for (unsigned i = 0; i < 32; ++i) {
+            unsigned char word = static_cast<unsigned char>(i);
+            access(tlm::TLM_WRITE_COMMAND, i, word);
+        }
+        std::cout << "transport calls: " << transports_
+                  << "   sc_time_stamp: " << sc_core::sc_time_stamp()
+                  << "   effective local: " << qk_.get_current_time() << "\n";
+        sc_core::sc_stop();
+    }
+
+    void access(tlm::tlm_command cmd, sc_dt::uint64 addr, unsigned char& word) {
+        if (dmi_valid_ && addr >= dmi_.get_start_address() && addr <= dmi_.get_end_address()) {
+            unsigned char* p = dmi_.get_dmi_ptr() + (addr - dmi_.get_start_address());
+            if (cmd == tlm::TLM_WRITE_COMMAND) *p = word; else word = *p;
+            qk_.inc(dmi_.get_write_latency());              // DMI 경로도 지연을 부과한다
+            if (qk_.need_sync()) qk_.sync();
+            return;
+        }
+
+        tlm::tlm_generic_payload trans;
+        trans.set_command(cmd);
+        trans.set_address(addr);
+        trans.set_data_ptr(&word);
+        trans.set_data_length(1);
+        trans.set_streaming_width(1);
+        trans.set_byte_enable_ptr(nullptr);
+        trans.set_dmi_allowed(false);
+        trans.set_response_status(tlm::TLM_INCOMPLETE_RESPONSE);
+
+        sc_core::sc_time delay = qk_.get_local_time();      // §16.3.4 i — local offset을 인자로 넘긴다
+        socket->b_transport(trans, delay);
+        ++transports_;
+        if (trans.is_response_error()) SC_REPORT_ERROR("cpu", trans.get_response_string().c_str());
+
+        qk_.set(delay);                                     // 반환된 delay를 반영
+        if (qk_.need_sync()) qk_.sync();                    // local offset > local quantum 일 때만
+
+        if (trans.is_dmi_allowed()) {                       // §11.3 — 이제 DMI를 물어봐도 된다
+            tlm::tlm_dmi d;
+            tlm::tlm_generic_payload probe;
+            probe.set_address(addr);
+            probe.set_command(cmd);
+            dmi_valid_ = socket->get_direct_mem_ptr(probe, d);
+            if (dmi_valid_) dmi_ = d;
+        }
+    }
+};
+
+class Top : public sc_core::sc_module {
+public:
+    explicit Top(sc_core::sc_module_name name) : sc_core::sc_module(name) {
+        cpu.socket.bind(mem.socket);
+    }
+    Cpu    SC_NAMED(cpu);
+    Memory SC_NAMED(mem, sc_core::sc_time(20, sc_core::SC_NS));
+};
+
+int sc_main(int, char*[]) {
+    Top top("top");
+    sc_core::sc_start();
+    if (sc_core::sc_get_status() != sc_core::SC_STOPPED) sc_core::sc_stop();
+    return 0;
+}
+```
+
+출력:
+
+```
+transport calls: 1   sc_time_stamp: 600 ns   effective local: 640 ns
+```
+
+읽는 법 — **이 두 줄이 LT의 전부다.**
+
+- **transport 호출은 32번 중 1번뿐이다.** 첫 접근에서 target이 `set_dmi_allowed(true)`를 걸었고, 이후 31번은 DMI 포인터로 직접 갔다. §10.3.3이 말하는 100X 가속이 이것이다.
+- **`sc_time_stamp()`는 600 ns인데 effective local time은 640 ns다.** 모델이 한 일은 32 × 20 ns = 640 ns인데 시뮬레이션 시각은 마지막 quantum 경계(200 ns × 3)에 머물러 있다. §16.3.4 h가 말하는 그대로 — `sc_time_stamp`는 **현재 quantum 시작 시점**을 반환한다. 이 40 ns의 간극이 temporal decoupling이고, 이 안에서 `sc_signal`을 읽으면 quantum 시작 시점의 값이 나온다 (§16.3.4 l).
+
+## Untimed(UT)는 어떻게 되는가
+
+§10.3.2가 명시한다: **TLM-2.0은 untimed coding style에 명시적 대비를 하지 않는다.** 현대의 버스 기반 시스템은 임베디드 프로세서 위 소프트웨어를 모델링하려면 어떤 형태로든 시간 개념을 요구하기 때문이다.
+
+- **"정확도가 명시되지 않은 제한적 타이밍 정보를 담은 모델"을 untimed라 부르는 관행이 있는데, TLM-2.0에서 그런 모델은 loosely-timed로 분류된다.** 즉 그 요구는 이 스킬이 맞다.
+- **진짜 untimed 모델링은 TLM-1 core interface가 지원한다** → `../references/ch17-tlm1-analysis-ports.md`. `tlm_fifo`의 blocking `put`/`get`이 명시적 동기화 지점을 만든다.
+- §10.3.10 Table 52는 untimed를 **hardware functional verification의 verification environment**에만 배정한다.
+
+`sysc-ut` 같은 별도 스킬은 없다. TLM-2.0에 그런 스타일이 정의돼 있지 않아서다 — 지어내지 마라.
 
 ## 자주 틀리는 것
 

@@ -41,7 +41,8 @@ SKILL-SYSC/
 ├── sysc-ca/                                  sub-skill — cycle-accurate modeling (outside TLM-2.0)
 ├── sysc-verify/                              sub-skill — auditing existing code for conformance
 ├── tools/
-│   └── verify_references.py                  checks references/ against your own copy of the LRM
+│   ├── verify_references.py                  checks references/ against your own copy of the LRM
+│   └── verify_citations.py                   checks every § citation in the skills against the LRM
 └── references/
     ├── ch01-overview.md                      scope, shall/should/may, C++17 baseline
     ├── ch02-normative-references.md          ISO/IEC 14882:2017
@@ -125,6 +126,14 @@ python3 tools/verify_references.py --selftest   # checks the script itself, no P
 ```
 
 It needs `pdftotext` (poppler-utils) and exits non-zero on any mismatch. The extracted text is cached in `.lrm-cache.txt`, which is gitignored for the same reason as the PDF.
+
+`tools/verify_citations.py` guards the other direction — the files that *cite* the references. `SKILL.md`, `CODING-RULES.md` and the four sub-skills carry 148 subclause citations between them, and a wrong one is invisible: the number exists, it just points somewhere else. So it checks that every cited number is a real LRM subclause, that a citation whose subclause the LRM names after an identifier is not sitting in a sentence about a sibling identifier instead, and that a citation backing a `shall` / `should` / `error` names the subclause carrying the rule rather than its parent.
+
+```bash
+python3 tools/verify_citations.py --pdf /path/to/1666-2023.pdf
+python3 tools/verify_citations.py --all        # list every citation with the LRM's own title
+python3 tools/verify_citations.py --selftest   # no PDF needed
+```
 
 ## Citation
 

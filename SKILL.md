@@ -1,6 +1,6 @@
 ---
 name: systemc
-description: IEEE Std 1666-2023 (SystemC LRM) 기반으로 SystemC/TLM-2.0 모델 코드를 작성·검토하고, 규칙의 근거를 절 번호로 인용한다. SystemC, TLM-2.0, sc_module, sc_signal, sc_fifo, SC_THREAD, SC_METHOD, SC_CTHREAD, sc_port, sc_export, sc_prim_channel, sc_event, sc_time, sc_int/sc_uint/sc_bigint/sc_fixed 등 SystemC 데이터 타입, b_transport/nb_transport, tlm_generic_payload, initiator/target socket, DMI, temporal decoupling, quantum keeper, sc_report/sc_trace, delta cycle이나 스케줄러 동작을 다룰 때 사용한다. "LRM이 뭐라고 하냐", "이 SystemC 코드 표준에 맞냐", "TLM-2.0 base protocol 규칙" 같은 질문에도 사용한다.
+description: IEEE Std 1666-2023 (SystemC LRM)이 무엇을 규정하는지 절 번호로 답하고, SystemC 코어 언어 코드를 표준에 맞게 작성·검토한다. sc_module, 프로세스(SC_METHOD/SC_THREAD/SC_CTHREAD), sc_port/sc_export/sc_prim_channel, sc_event, sc_time, sc_signal/sc_fifo/sc_clock/sc_mutex/sc_semaphore, sc_int/sc_uint/sc_bigint/sc_logic/sc_bv/sc_fixed 등 데이터 타입, sc_report/sc_trace/sc_vector/sc_assert, elaboration/simulation 단계와 delta cycle·스케줄러 동작, deprecated 여부, 2011→2023 변경점을 다룰 때 사용한다. "LRM이 뭐라고 하냐", "이 SystemC 코드 표준에 맞냐", "이 절의 정확한 문언" 같은 질문에 사용한다. TLM-2.0 모델을 특정 코딩 스타일로 작성하는 것이 목적이면 sysc-lt(loosely-timed) / sysc-at(approximately-timed) / sysc-ca(cycle-accurate)를, 기존 코드의 준수 감사가 목적이면 sysc-verify를 쓴다.
 ---
 
 # SystemC / TLM-2.0 — IEEE Std 1666-2023
@@ -254,7 +254,7 @@ public:
     }
 
 private:
-    int count_ = 0;                             // 순수 C++ 멤버는 private + underscore (§5.2.10)
+    int count_ = 0;                             // 순수 C++ 멤버는 private + underscore (이 리포의 규칙)
 
     void run() {
         for (;;) {                              // §5.2.11 조기 종료 방지 관용구
