@@ -69,6 +69,21 @@ LRM §5.2.8 — SC_CTHREAD는 end_of_elaboration 콜백에서 호출하면 안 �
 
 NOTE와 예제는 **informative** — 규범이 아니다. 인용할 때 그 사실을 밝혀라.
 
+## 구현 기준선 — Accellera SystemC 3.0.2
+
+작성한 코드는 **IEEE 1666-2023 구현에서 컴파일되어야** 한다. 기준 구현은 **Accellera SystemC 3.0.2** (`IEEE_1666_SYSTEMC == 202301L`, C++17). `examples/lt_demo`가 이 조합으로 검증되어 있다.
+
+- **SystemC 2.3.x는 IEEE 1666-2011 구현이다.** 2023 신규 기능(`SC_NAMED`, `sc_hierarchy_scope`, `sc_stage_callback_if`, `sc_time(std::string_view)`, `sc_delta_count_at_current_time`, `sc_suspend_all` 계열, `sc_unbound`/`sc_tie`, generic payload option attribute)은 거기서 컴파일되지 않는다. 무엇이 2023 신규인지는 `references/annexD-changes-2011-2023.md`로 확인하라.
+- **코드를 쓰기 전에 `references/annexC-deprecated.md`를 확인하라.** 3.0.2는 deprecated 구성요소에 컴파일 경고를 낸다. 특히 `SC_HAS_PROCESS`는 2023에서 불필요해졌고(Annex C ah / Annex D 10) 경고 대상이다 — **생성자에서 `SC_METHOD`/`SC_THREAD`를 쓸 때 붙이지 마라.**
+
+### 알려진 LRM–구현 불일치
+
+표준이 확정적(definitive)이다 — LRM Introduction: *"In the event of discrepancies between the behavior of the reference simulator and statements made in this standard, this standard shall be taken to be definitive."* 아래는 그럼에도 코드가 컴파일되게 하려면 알아야 할 항목이다.
+
+| LRM | 표준의 선언 | SystemC 3.0.2 | 실제로 쓸 것 |
+|---|---|---|---|
+| §5.10.2 / §5.10.8 | `static const sc_event none;` (데이터 멤버) | `static const sc_event& none()` (함수) | `sc_event::none()` |
+
 ## 코드 작성 전 항상 확인할 것
 
 ### 필수 확인 5가지

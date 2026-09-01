@@ -1375,6 +1375,8 @@ static const sc_event none;
 ```
 사용되지 않는 event 참조가 필요한 문맥용. **절대 notify되지 않으며 const**임이 보장된다. 애플리케이션 코드에서 실수로 명시적 notify를 하는 것을 막는다.
 
+> **구현 불일치 주의** (표준 원문이 아닌 관찰 사항). Accellera SystemC 3.0.2는 이것을 데이터 멤버가 아니라 **정적 멤버 함수** `static const sc_event& none()`으로 제공한다. 따라서 그 구현에서는 `sc_event::none`이 아니라 **`sc_event::none()`**으로 써야 컴파일된다. LRM Introduction은 표준과 참조 시뮬레이터의 동작이 어긋나면 **표준이 확정적(definitive)**이라고 규정하므로, 이는 구현 쪽 이탈이다. 이식성이 필요하면 이 이름에 의존하지 말 것.
+
 ### 5.10.9 다중 notification — 가장 이른 것만 살아남는다
 
 한 event는 pending notification을 **최대 1개**만 갖는다 shall. 이미 pending인 상태에서 `notify`가 불리면 **가장 이른 시각에 발생할 것만 살아남고** 늦은 것은 취소된다 (또는 애초에 스케줄되지 않는다) shall.

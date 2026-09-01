@@ -71,3 +71,9 @@ Testing/
 # SystemC skill
 *.pdf
 .DS_Store
+
+# examples/lt_demo build artifacts
+examples/lt_demo/lt_model
+examples/lt_demo/features_2023
+# line 51 ignores generated Makefiles; this one is hand-written and tracked
+!examples/lt_demo/Makefile

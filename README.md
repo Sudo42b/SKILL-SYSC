@@ -12,6 +12,8 @@ Every Clause and Annex of the LRM is distilled into a matching reference file. T
 
 Normative force is preserved verbatim throughout: `shall` / `should` / `may`, and `error` / `undefined` / `implementation-defined` are never softened or strengthened.
 
+Target implementation: **Accellera SystemC 3.0.2** (`IEEE_1666_SYSTEMC == 202301L`), C++17. SystemC 2.3.x implements IEEE 1666-2011 and will not compile the 2023 additions.
+
 ## Install
 
 ### User-wide
@@ -68,6 +70,19 @@ Only `SKILL.md` is always in context. Everything under `references/` is read on 
 > Can I use SC_CTHREAD inside the end_of_elaboration callback?
 > Find any deprecated SystemC features in this code.
 ```
+
+## Worked example
+
+`examples/lt_demo` is a TLM-2.0 loosely-timed model — initiator, address-decoding router, two memories — using blocking transport, DMI, debug transport, and temporal decoupling through `tlm_quantumkeeper`. Alongside it, `features_2023.cpp` asserts the specified behavior of constructs Annex D records as new in 2023. Every non-obvious line cites the subclause that requires it.
+
+```bash
+export SYSTEMC_HOME=$HOME/opt/systemc-3.0.2
+cd examples/lt_demo
+make run      # the loosely-timed model
+make check    # the 1666-2023 feature probe -> 60 passed, 0 failed
+```
+
+See `examples/lt_demo/README.md` for how to build SystemC 3.0.2 and for one known deviation of the implementation from the standard.
 
 ## Citation
 
