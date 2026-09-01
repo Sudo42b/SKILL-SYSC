@@ -1,0 +1,77 @@
+# SKILL-SYSC
+
+Claude Code skill for **SystemC / TLM-2.0**, built from **IEEE Std 1666-2023** (Language Reference Manual, 618 p).
+
+LRM의 17개 Clause와 Annex를 1:1로 정리한 reference 집합이다. Claude가 SystemC 모델 코드를 작성·검토할 때 표준 규칙을 따르고, 그 근거를 절 번호로 인용하게 한다.
+
+## 하는 일
+
+- **작성** — LRM 준수 SystemC / TLM-2.0 코드 생성
+- **조회** — "LRM이 X에 대해 뭐라고 하냐"에 절 번호를 인용해 답변
+- **검토** — 기존 코드의 `shall` 위반, deprecated 기능 사용, `undefined` 동작 의존 탐지
+
+규범 강도(`shall` / `should` / `may` / `error` / `undefined` / `implementation-defined`)를 원문 그대로 보존한다.
+
+## 설치
+
+### 사용자 전역
+
+```bash
+git clone https://github.com/Sudo42b/SKILL-SYSC.git ~/.claude/skills/systemc
+```
+
+### 프로젝트 한정
+
+```bash
+git clone https://github.com/Sudo42b/SKILL-SYSC.git .claude/skills/systemc
+```
+
+Claude Code 재시작 후 `/systemc` 로 호출하거나, SystemC 관련 질문 시 자동 활성화된다.
+
+## 구조
+
+```
+SKILL-SYSC/
+├── SKILL.md                                  진입점 — 어느 reference를 읽을지 라우팅
+└── references/
+    ├── ch01-overview.md                      Scope, shall/should/may, C++17 baseline
+    ├── ch02-normative-references.md          ISO/IEC 14882:2017
+    ├── ch03-terminology.md                   용어 정의, † 클래스, 수명 규칙, 네임스페이스
+    ├── ch04-elaboration-simulation.md        스케줄러, delta cycle, 콜백 허용/금지 매트릭스
+    ├── ch05-core-language.md                 sc_module, 프로세스, sc_port/sc_export, sc_event, sc_time
+    ├── ch06-predefined-channels.md           sc_signal, sc_fifo, sc_clock, sc_mutex, sc_semaphore
+    ├── ch07-datatypes.md                     sc_int/sc_uint/sc_bigint/sc_logic/sc_bv/sc_lv/sc_fixed
+    ├── ch08-utilities.md                     sc_trace, sc_report, sc_vector, sc_assert
+    ├── ch09-tlm2-overview.md                 TLM-2.0 준수 조건
+    ├── ch10-tlm2-introduction.md             coding style (UT/LT/AT/CA), socket 개념
+    ├── ch11-tlm2-core-interfaces.md          b_transport, nb_transport, DMI, transport_dbg
+    ├── ch12-tlm2-global-quantum.md           tlm_global_quantum
+    ├── ch13-tlm2-sockets.md                  initiator/target socket
+    ├── ch14-tlm2-generic-payload.md          속성, 메모리 관리, extension
+    ├── ch15-tlm2-base-protocol.md            phase 전이표, 트랜잭션 순서 규칙
+    ├── ch16-tlm2-utilities.md                convenience socket, quantum keeper, PEQ
+    ├── ch17-tlm1-analysis-ports.md           put/get/peek, tlm_fifo, analysis port
+    ├── annexA-glossary.md                    용어집 (informative)
+    ├── annexB-introduction.md                SystemC 입문 (informative)
+    ├── annexC-deprecated.md                  쓰면 안 되는 기능 목록 (informative)
+    └── annexD-changes-2011-2023.md           2011 → 2023 변경점 (informative)
+```
+
+`SKILL.md`만 항상 로드되고, `references/*`는 필요한 것만 읽힌다 (progressive disclosure).
+
+## 사용 예
+
+```
+> sc_signal에 두 프로세스가 write하면 어떻게 되나?
+> 이 TLM initiator가 base protocol을 지키는지 검토해줘
+> LT coding style로 temporal decoupling 붙인 initiator 모듈 만들어줘
+> end_of_elaboration 콜백 안에서 SC_CTHREAD 써도 되나?
+> 이 SystemC 코드에서 deprecated 기능 쓰는 곳 찾아줘
+```
+
+## 라이선스와 출처
+
+reference 내용은 IEEE Std 1666-2023, *IEEE Standard for Standard SystemC® Language Reference Manual*, Copyright © 2023 IEEE 의 규범적 내용을 요약·정리한 것이다.
+
+**표준 원문을 대체하지 않는다.** 정확한 문언이 필요하면 IEEE Xplore에서 원문을 확인하라.
+SystemC®는 Accellera Systems Initiative의 등록 상표다.
